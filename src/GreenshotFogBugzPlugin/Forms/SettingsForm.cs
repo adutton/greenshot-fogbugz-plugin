@@ -1,5 +1,23 @@
-﻿// TODO: File header
-// TODO: Fix formatting
+﻿/*
+ * Greenshot - a free and open source screenshot tool
+ * Copyright (C) 2007-2013  Thomas Braun, Jens Klingen, Robin Krom
+ * 
+ * For more information see: http://getgreenshot.org/
+ * The Greenshot project is hosted on Sourceforge: http://sourceforge.net/projects/greenshot/
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 1 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -35,9 +53,7 @@ namespace GreenshotFogBugzPlugin.Forms {
 
                 this.ServerUrlTextBox.Text = m_serverUrl;
                 this.EmailTextBox.Text = m_emailAddress;
-            }
-            else
-            {
+            } else {
                 // Setup is established
                 this.InitialPanel.Visible = false;
                 this.EstablishedPanel.Visible = true;
@@ -49,37 +65,32 @@ namespace GreenshotFogBugzPlugin.Forms {
             return base.ShowDialog();
         }
 
-        public string FogBugzLoginToken
-        {
+        public string FogBugzLoginToken {
             get { return m_loginToken; }
             set { m_loginToken = value; }
         }
 
-        public string FogBugzServerUrl
-        {
+        public string FogBugzServerUrl {
             get { return m_serverUrl; }
             set { m_serverUrl = value; }
         }
 
-        public string FogBugzEmailAddress
-        {
+        public string FogBugzEmailAddress {
             get { return m_emailAddress; }
             set { m_emailAddress = value; }
         }
 
-        public bool OpenBrowserAfterSend
-        {
+        public bool OpenBrowserAfterSend {
         	get { return m_openBrowserAfterSend; }
         	set { m_openBrowserAfterSend = value; }
         }
-        public bool CopyCaseUrlToClipboardAfterSend
-        {
+
+        public bool CopyCaseUrlToClipboardAfterSend {
         	get { return m_copyCaseUrlToClipboardAfterSend; }
         	set { m_copyCaseUrlToClipboardAfterSend = value; }
         }
 
-        private static string FormatServerAddress(string url)
-        {
+        private static string FormatServerAddress(string url) {
             if (string.IsNullOrEmpty(url) || url.Trim() == string.Empty)
                 return null;
             if (!url.StartsWith("http"))
@@ -92,8 +103,7 @@ namespace GreenshotFogBugzPlugin.Forms {
             return url;
         }
 
-        private void LoginButtonClick(object sender, EventArgs e)
-        {
+        private void LoginButtonClick(object sender, EventArgs e) {
             this.ServerUrlTextBox.Text = FormatServerAddress(this.ServerUrlTextBox.Text);
             this.InitialLabel.Text = "";
             
@@ -102,8 +112,7 @@ namespace GreenshotFogBugzPlugin.Forms {
 
             LoginResult result = fb.Login(this.EmailTextBox.Text, this.PasswordTextBox.Text);
 
-            switch (result)
-            {
+            switch (result) {
                 case LoginResult.Ok:
                     // Save results
                     m_loginToken = fb.Token;
@@ -134,15 +143,13 @@ namespace GreenshotFogBugzPlugin.Forms {
             }
         }
 
-        void OkButtonClick(object sender, EventArgs e)
-        {
+        void OkButtonClick(object sender, EventArgs e) {
             // TODO: Save data back to configuration objects
             // I don't think this is actually needed because we do this if everything worked in the
             // Login button method
         }
 
-        void ClearButtonClick(object sender, EventArgs e)
-        {
+        void ClearButtonClick(object sender, EventArgs e) {
             this.InitialPanel.Visible = true;
             this.EstablishedPanel.Visible = false;
 

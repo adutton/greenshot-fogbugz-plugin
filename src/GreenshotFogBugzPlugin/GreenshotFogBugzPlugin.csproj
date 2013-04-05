@@ -102,9 +102,6 @@
     <Folder Include="Forms" />
     <Folder Include="Languages" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="ProfilingSessions\Session20120318_163245.sdps" />
-  </ItemGroup>
   <PropertyGroup>
     <PreBuildEvent>"$(SolutionDir)\tools\TortoiseSVN\SubWCRev.exe" "$(ProjectDir)\" "$(ProjectDir)\Properties\AssemblyInfo.cs.template" "$(ProjectDir)\Properties\AssemblyInfo.cs"</PreBuildEvent>
     <PostBuildEvent>mkdir "$(SolutionDir)bin\$(Configuration)\Plugins\$(ProjectName)"
