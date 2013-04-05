@@ -1,0 +1,1 @@
+Plug-in for [Greenshot](http://getgreenshot.com/) so it can be used to create cases in [FogBugz](http://fogbugz.com/)

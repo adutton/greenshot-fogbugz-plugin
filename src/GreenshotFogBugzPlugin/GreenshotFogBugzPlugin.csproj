@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{80D8DEB9-94E3-4876-8CCA-2DF1ED5F2C50}</ProjectGuid>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <OutputType>Library</OutputType>
+    <RootNamespace>GreenshotFogBugzPlugin</RootNamespace>
+    <AssemblyName>GreenshotFogBugzPlugin</AssemblyName>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <SourceAnalysisOverrideSettingsFile>C:\Users\Robin\AppData\Roaming\ICSharpCode/SharpDevelop3.0\Settings.SourceAnalysis</SourceAnalysisOverrideSettingsFile>
+    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+    <NoStdLib>False</NoStdLib>
+    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>Full</DebugType>
+    <Optimize>False</Optimize>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <RegisterForComInterop>False</RegisterForComInterop>
+    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
+    <BaseAddress>4194304</BaseAddress>
+    <PlatformTarget>x86</PlatformTarget>
+    <FileAlignment>4096</FileAlignment>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <DebugSymbols>false</DebugSymbols>
+    <DebugType>None</DebugType>
+    <Optimize>True</Optimize>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+    <RegisterForComInterop>False</RegisterForComInterop>
+    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
+    <BaseAddress>4194304</BaseAddress>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <FileAlignment>4096</FileAlignment>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
+  <ItemGroup>
+    <Reference Include="log4net">
+      <HintPath>..\Greenshot\Lib\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="FBApiNet35.cs" />
+    <Compile Include="FogBugz.cs" />
+    <Compile Include="FogBugzFile.cs" />
+    <Compile Include="Forms\CaseSearchForm.cs" />
+    <Compile Include="Forms\CaseSearchForm.Designer.cs">
+      <DependentUpon>CaseSearchForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\FogBugzForm.cs" />
+    <Compile Include="Forms\SettingsForm.cs" />
+    <Compile Include="Forms\SettingsForm.Designer.cs">
+      <DependentUpon>SettingsForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FogBugzDestination.cs" />
+    <Compile Include="FogBugzPlugin.cs" />
+    <Compile Include="FogBugzConfiguration.cs" />
+    <Compile Include="LanguageKeys.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Forms\CaseSearchForm.resx">
+      <DependentUpon>CaseSearchForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\SettingsForm.resx">
+      <DependentUpon>SettingsForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="Languages\language_FogBugzplugin-de-DE.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Languages\language_FogBugzplugin-en-US.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Languages\language_FogBugzplugin-fr_FR.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Languages\language_FogBugzplugin-nl-NL.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Languages\language_FogBugzplugin-zh-CN.xml" />
+    <None Include="Properties\AssemblyInfo.cs.template" />
+    <EmbeddedResource Include="FogBugzPlugin.resx">
+      <DependentUpon>FogBugzPlugin.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GreenshotPlugin\GreenshotPlugin.csproj">
+      <Project>{5B924697-4DCD-4F98-85F1-105CB84B7341}</Project>
+      <Name>GreenshotPlugin</Name>
+    </ProjectReference>
+    <Folder Include="Forms" />
+    <Folder Include="Languages" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ProfilingSessions\Session20120318_163245.sdps" />
+  </ItemGroup>
+  <PropertyGroup>
+    <PreBuildEvent>"$(SolutionDir)\tools\TortoiseSVN\SubWCRev.exe" "$(ProjectDir)\" "$(ProjectDir)\Properties\AssemblyInfo.cs.template" "$(ProjectDir)\Properties\AssemblyInfo.cs"</PreBuildEvent>
+    <PostBuildEvent>mkdir "$(SolutionDir)bin\$(Configuration)\Plugins\$(ProjectName)"
+copy "$(ProjectDir)bin\$(Configuration)\$(TargetFileName)" "$(SolutionDir)bin\$(Configuration)\Plugins\$(ProjectName)\*.gsp"
+mkdir "$(SolutionDir)bin\$(Configuration)\Languages\Plugins\$(ProjectName)"
+copy "$(ProjectDir)bin\$(Configuration)\Languages\*.xml" "$(SolutionDir)bin\$(Configuration)\Languages\Plugins\$(ProjectName)\"</PostBuildEvent>
+  </PropertyGroup>
+</Project>
