@@ -2,14 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-//using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
-//using System.Xml.Linq;
 using FogBugzTestHarness;
-//using Net4;
 
 /// <summary>
 /// Interacts with the FogBugz XML API, wrapping the C# FBApi
