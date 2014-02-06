@@ -1,19 +1,22 @@
+#region
+
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Xml;
 using FogBugzTestHarness;
 
+#endregion
+
 /// <summary>
-/// Interacts with the FogBugz XML API, wrapping the C# FBApi
-/// http://fogbugz.stackexchange.com/fogbugz-xml-api
+///     Interacts with the FogBugz XML API, wrapping the C# FBApi
+///     http://fogbugz.stackexchange.com/fogbugz-xml-api
 /// </summary>
 public class FogBugz
 {
+    private readonly FBApiNet35 m_fb;
+    private readonly Uri m_server;
+    private string m_token;
+
     public FogBugz(Uri server, string token)
     {
         m_server = server;
@@ -21,8 +24,10 @@ public class FogBugz
         m_fb = new FBApiNet35(m_server);
     }
 
+    public string Token { get { return m_token; } }
+
     public LoginResult Login(string email, string password)
-    {        
+    {
         var result = m_fb.Login(email, password);
 
         if (result == LoginResult.Ok)
@@ -37,7 +42,11 @@ public class FogBugz
             throw new InvalidOperationException("Not connected");
 
         if (string.IsNullOrEmpty(query) || query.Trim().Length == 0)
-        	return new SearchResults { Results = new List<SearchResult>(), TotalResults = 0 };
+            return new SearchResults
+            {
+                Results = new List<SearchResult>(),
+                TotalResults = 0
+            };
 
         /*    string[] fakeResults = new string[] {
                 "12345 - Blah Blah Blah - Aaron Dutton",
@@ -69,25 +78,29 @@ public class FogBugz
         */
 
 
-        FBApiNet35 fb = new FBApiNet35(m_server, m_token);
+        var fb = new FBApiNet35(m_server, m_token);
 
-        string finalQuery = "status:open " + query;
-        int caseId = 0;
+        var finalQuery = "status:open " + query;
+        var caseId = 0;
         if (Int32.TryParse(query, out caseId) && caseId > 0)
             finalQuery = string.Concat("status:open ixBug:", caseId);
 
-        SearchResults results = new SearchResults();
+        var results = new SearchResults();
         results.Results = new List<SearchResult>();
-        XmlDocument resultDocument = fb.XSearch(finalQuery, "ixBug,sTitle", maxCaseCount);
+        var resultDocument = fb.XSearch(finalQuery, "ixBug,sTitle", maxCaseCount);
 
-        XmlNode casesNode = resultDocument.SelectSingleNode("/response/cases");
+        var casesNode = resultDocument.SelectSingleNode("/response/cases");
         results.TotalResults = Int32.Parse(casesNode.Attributes["count"].Value);
 
-        XmlNodeList xmlResults = resultDocument.SelectNodes("/response/cases/case");
+        var xmlResults = resultDocument.SelectNodes("/response/cases/case");
 
-        foreach(XmlNode node in xmlResults)
+        foreach (XmlNode node in xmlResults)
         {
-        	results.Results.Add(new SearchResult { CaseId = Int32.Parse(node["ixBug"].InnerText), Title = node["sTitle"].InnerText });
+            results.Results.Add(new SearchResult
+            {
+                CaseId = Int32.Parse(node["ixBug"].InnerText),
+                Title = node["sTitle"].InnerText
+            });
         }
 
         return results;
@@ -95,24 +108,24 @@ public class FogBugz
 
     public int CreateNewCase(string caption, string filename, byte[] imageData)
     {
-        FBApiNet35 fb = new FBApiNet35(m_server, m_token);
+        var fb = new FBApiNet35(m_server, m_token);
 
-        Dictionary<string, string> cmds = new Dictionary<string, string>();
+        var cmds = new Dictionary<string, string>();
         cmds.Add("sTitle", caption);
         cmds.Add("sEvent", caption);
         cmds.Add("cols", "ixBug");
-        XmlDocument output = fb.XCmd("new", cmds, EncodeSingleFileForFogBugz(filename, imageData));
+        var output = fb.XCmd("new", cmds, EncodeSingleFileForFogBugz(filename, imageData));
 
-        string caseNumber = output.InnerText;
+        var caseNumber = output.InnerText;
 
         return Int32.Parse(caseNumber);
     }
 
     public void AttachImageToExistingCase(int caseId, string caption, string filename, byte[] imageData)
     {
-        FBApiNet35 fb = new FBApiNet35(m_server, m_token);
+        var fb = new FBApiNet35(m_server, m_token);
 
-        Dictionary<string, string> cmds = new Dictionary<string,string>();
+        var cmds = new Dictionary<string, string>();
         cmds.Add("ixBug", caseId.ToString());
         cmds.Add("sEvent", caption);
         cmds.Add("cols", "ixBug");
@@ -121,17 +134,16 @@ public class FogBugz
 
     private FogBugzFile[] EncodeSingleFileForFogBugz(string filename, byte[] imageData)
     {
-        return new FogBugzFile[] 
-        { 
-            new FogBugzFile() { Filename = filename, ContentType = "image/jpeg", Data = imageData } 
+        return new[]
+        {
+            new FogBugzFile
+            {
+                Filename = filename,
+                ContentType = "image/jpeg",
+                Data = imageData
+            }
         };
     }
-
-    public string Token { get { return m_token; } }
-
-    private Uri m_server;
-    private string m_token;
-    private FBApiNet35 m_fb;
 }
 
 public class SearchResult
