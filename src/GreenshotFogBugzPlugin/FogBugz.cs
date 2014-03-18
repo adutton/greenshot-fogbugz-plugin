@@ -159,7 +159,7 @@ public class FogBugz
         {
             projects.Add(new Project
             {
-                ID = Convert.ToInt32(projectNode["ixProject"].InnerText),
+                ProjectID = Convert.ToInt32(projectNode["ixProject"].InnerText),
                 ProjectName = projectNode["sProject"].InnerText,
                 OwnerID = Convert.ToInt32(projectNode["ixPersonOwner"].InnerText),
                 OwnerName = projectNode["sPersonOwner"].InnerText,
@@ -182,23 +182,105 @@ public class FogBugz
 
         var areaNodes = fb.XListAreas(onlyWritable, projectID, areaID);
 
-        foreach (XmlNode a in areaNodes)
+        foreach (XmlNode areaNode in areaNodes)
         {
             areas.Add(new Area
             {
-                ID = Convert.ToInt32(a["ixArea"].InnerText),
-                AreaName = a["sArea"].InnerText,
-                ProjectID = Convert.ToInt32(a["ixProject"].InnerText),
-                ProjectName = a["sProject"].InnerText,
-                OwnerID = String.IsNullOrEmpty(a["ixPersonOwner"].InnerText) ? -1 : Convert.ToInt32(a["ixPersonOwner"].InnerText),
-                OwnerName = a["sPersonOwner"].InnerText,
-                Type = (AreaType)Convert.ToInt32(a["nType"].InnerText),
-                DocumentsTrained = Convert.ToInt32(a["cDoc"].InnerText),
+                AreaID = Convert.ToInt32(areaNode["ixArea"].InnerText),
+                AreaName = areaNode["sArea"].InnerText,
+                ProjectID = Convert.ToInt32(areaNode["ixProject"].InnerText),
+                ProjectName = areaNode["sProject"].InnerText,
+                OwnerID = String.IsNullOrEmpty(areaNode["ixPersonOwner"].InnerText) ? -1 : Convert.ToInt32(areaNode["ixPersonOwner"].InnerText),
+                OwnerName = areaNode["sPersonOwner"].InnerText,
+                Type = (AreaType) Convert.ToInt32(areaNode["nType"].InnerText),
+                DocumentsTrained = Convert.ToInt32(areaNode["cDoc"].InnerText),
                 Deleted = false
             });
         }
 
         return areas;
+    }
+
+    public List<Category> ListCategories()
+    {
+        var fb = new FBApiNet35(m_server, m_token);
+
+        var categories = new List<Category>();
+
+        var categoriesNodes = fb.XListCategories();
+
+        foreach (XmlNode categoryNode in categoriesNodes)
+        {
+            categories.Add(new Category
+            {
+                CategoryID = Convert.ToInt32(categoryNode["ixCategory"].InnerText),
+                CategoryName = categoryNode["sCategory"].InnerText,
+                CategoryNamePlural = categoryNode["sPlural"].InnerText,
+                DefaultResolvedStatusID = Convert.ToInt32(categoryNode["ixStatusDefault"].InnerText),
+                DefaultActiveStatusID = Convert.ToInt32(categoryNode["ixStatusDefaultActive"].InnerText),
+                IsScheduleItem = Convert.ToBoolean(categoryNode["fIsScheduleItem"].InnerText)
+            });
+        }
+
+        return categories;
+    }
+
+    public List<Status> ListStatuses(Int32 categoryID = -1, Boolean onlyResovled = false)
+    {
+        var fb = new FBApiNet35(m_server, m_token);
+
+        var statuses = new List<Status>();
+
+        var statusNodes = fb.XListStatuses(categoryID, onlyResovled);
+
+        foreach (XmlNode statusNode in statusNodes)
+        {
+            statuses.Add(new Status
+            {
+                StatusID = Convert.ToInt32(statusNode["ixStatus"].InnerText),
+                StatusName = statusNode["sStatus"].InnerText,
+                CategoryID = Convert.ToInt32(statusNode["ixCategory"].InnerText),
+                WorkDone = Convert.ToBoolean(statusNode["fWorkDone"].InnerText),
+                Resolved = Convert.ToBoolean(statusNode["fResolved"].InnerText),
+                Duplicate = Convert.ToBoolean(statusNode["fDuplicate"].InnerText),
+                Deleted = Convert.ToBoolean(statusNode["fDeleted"].InnerText),
+                Order = Convert.ToInt32(statusNode["iOrder"].InnerText)
+            });
+        }
+
+        return statuses;
+    }
+
+    public List<Person> ListPeople(Boolean includeActive = true,
+        Boolean includeNormal = true,
+        Boolean includeDeleted = false,
+        Boolean includeCommunity = false,
+        Boolean includeVirtual = false)
+    {
+        var fb = new FBApiNet35(m_server, m_token);
+
+        var people = new List<Person>();
+
+        var peopleNodes = fb.XListPeople(includeActive, includeNormal, includeDeleted, includeCommunity, includeVirtual);
+
+        foreach (XmlNode personNode in peopleNodes)
+        {
+            people.Add(new Person
+            {
+                PersonID = Convert.ToInt32(personNode["ixPerson"].InnerText),
+                FullName = personNode["sFullName"].InnerText,
+                Email = personNode["sEmail"].InnerText,
+                Phone = personNode["sPhone"].InnerText,
+                Administrator = Convert.ToBoolean(personNode["fAdministrator"].InnerText),
+                Community = Convert.ToBoolean(personNode["fCommunity"].InnerText),
+                Virtual = Convert.ToBoolean(personNode["fVirtual"].InnerText),
+                Deleted = Convert.ToBoolean(personNode["fDeleted"].InnerText),
+                Notify = Convert.ToBoolean(personNode["fNotify"].InnerText),
+                Homepage = personNode["sHomepage"].InnerText
+            });
+        }
+
+        return people;
     }
 }
 
@@ -217,7 +299,7 @@ public class SearchResults
 public class Project
 {
     public Boolean Deleted { get; set; }
-    public int ID { get; set; }
+    public int ProjectID { get; set; }
     public Boolean Inbox { get; set; }
     public String ProjectName { get; set; }
     public String OwnerEmail { get; set; }
@@ -229,15 +311,15 @@ public class Project
 
 public enum AreaType
 {
-    Normal=0,
-    NotSpam=1,
-    Undecided=2,
-    Spam=3
+    Normal = 0,
+    NotSpam = 1,
+    Undecided = 2,
+    Spam = 3
 }
 
 public class Area
 {
-    public int ID { get; set; }
+    public int AreaID { get; set; }
     public String AreaName { get; set; }
     public int OwnerID { get; set; }
     public String OwnerName { get; set; }
@@ -246,4 +328,42 @@ public class Area
     public AreaType Type { get; set; }
     public Boolean Deleted { get; set; }
     public int DocumentsTrained { get; set; }
+}
+
+public class Category
+{
+    public int CategoryID { get; set; }
+    public String CategoryName { get; set; }
+    public String CategoryNamePlural { get; set; }
+    public Int32 DefaultResolvedStatusID { get; set; }
+    public Boolean IsScheduleItem { get; set; }
+    public Boolean IsDeleted { get; set; }
+    public Int32 Order { get; set; }
+    public Int32 DefaultActiveStatusID { get; set; }
+}
+
+public class Status
+{
+    public Int32 StatusID { get; set; }
+    public String StatusName { get; set; }
+    public Int32 CategoryID { get; set; }
+    public Boolean WorkDone { get; set; }
+    public Boolean Resolved { get; set; }
+    public Boolean Duplicate { get; set; }
+    public Boolean Deleted { get; set; }
+    public Int32 Order { get; set; }
+}
+
+public class Person
+{
+    public Int32 PersonID { get; set; }
+    public String FullName { get; set; }
+    public String Email { get; set; }
+    public String Phone { get; set; }
+    public Boolean Administrator { get; set; }
+    public Boolean Community { get; set; }
+    public Boolean Virtual { get; set; }
+    public Boolean Deleted { get; set; }
+    public Boolean Notify { get; set; }
+    public String Homepage { get; set; }
 }

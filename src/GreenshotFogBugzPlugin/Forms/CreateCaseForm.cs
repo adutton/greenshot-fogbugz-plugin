@@ -25,10 +25,11 @@ namespace GreenshotFogBugzPlugin.Forms
         #endregion
 
         #region FogBugz Fields
-
-        private List<Area> _areas;
         private List<Project> _projects;
-
+        private List<Area> _areas;
+        private List<Category> _categories;
+        private List<Status> _statuses;
+        private List<Person> _people; 
         #endregion
 
         #endregion
@@ -57,9 +58,15 @@ namespace GreenshotFogBugzPlugin.Forms
             var fb = new FogBugz(new Uri(m_cfg.FogBugzServerUrl), m_cfg.FogBugzLoginToken);
             _projects = fb.ListProjects();
             _areas = fb.ListAreas();
+            _categories = fb.ListCategories();
+            _statuses = fb.ListStatuses();
+            _people = fb.ListPeople();
 
             DataBindProject();
             DataBindArea();
+            DataBindCategories();
+            DataBindStatuses();
+            DataBindPeople();
         }
 
         #region Data Binding
@@ -68,18 +75,51 @@ namespace GreenshotFogBugzPlugin.Forms
         {
             cbProject.DataSource = _projects;
             cbProject.DisplayMember = "ProjectName";
-            cbProject.ValueMember = "ID";
+            cbProject.ValueMember = "ProjectID";
             cbProject.SelectedIndexChanged += cbProject_SelectedIndexChanged;
         }
 
         private void DataBindArea()
         {
-            cbArea.DataSource = _areas.Where(x => x.ProjectID == Convert.ToInt32(cbProject.SelectedValue));
+            cbArea.DataSource = _areas.Where(x => x.ProjectID == Convert.ToInt32(cbProject.SelectedValue)).ToList();
             cbArea.DisplayMember = "AreaName";
-            cbArea.ValueMember = "ID";
+            cbArea.ValueMember = "AreaID";
             cbArea.SelectedIndexChanged += cbArea_SelectedIndexChanged;
         }
 
+        private void DataBindCategories()
+        {
+            cbCategory.DataSource = _categories;
+            cbCategory.DisplayMember = "CategoryName";
+            cbCategory.ValueMember = "CategoryID";
+            cbCategory.SelectedIndexChanged += cbCategory_SelectedIndexChanged;
+        }
+
+        private void DataBindStatuses()
+        {
+            var currentCategory = _categories.FirstOrDefault(x => x.CategoryID == Convert.ToInt32(cbCategory.SelectedValue));
+
+            cbStatus.DataSource = _statuses.Where(x => x.CategoryID == Convert.ToInt32(cbCategory.SelectedValue) && !x.WorkDone).ToList();
+            cbStatus.DisplayMember = "StatusName";
+            cbStatus.ValueMember = "StatusID";
+
+            if (currentCategory != null)
+                cbStatus.SelectedValue = currentCategory.DefaultActiveStatusID;
+        }
+
+        private void DataBindPeople()
+        {
+            cbAssignedTo.DataSource = _people;
+            cbAssignedTo.DisplayMember = "FullName";
+            cbAssignedTo.ValueMember = "PersonID";
+
+            var currentArea = _areas.FirstOrDefault(x => x.AreaID == Convert.ToInt32(cbArea.SelectedValue));
+            if (currentArea != null && currentArea.OwnerID != -1)
+            {
+                cbAssignedTo.SelectedValue = currentArea.OwnerID;
+            }
+
+        }
         #endregion
 
         #region Event Handling
@@ -91,8 +131,18 @@ namespace GreenshotFogBugzPlugin.Forms
 
         private void cbArea_SelectedIndexChanged(object sender, EventArgs e)
         {
+            DataBindPeople();
+        }
+        private void cbCategory_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            DataBindStatuses();
         }
 
         #endregion
+
+        private void tableLayoutPanel1_Paint(object sender, System.Windows.Forms.PaintEventArgs e)
+        {
+
+        }
     }
 }

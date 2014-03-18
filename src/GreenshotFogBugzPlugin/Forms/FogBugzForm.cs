@@ -11,8 +11,5 @@ namespace GreenshotFogBugzPlugin.Forms
     /// </summary>
     public class FogBugzForm : GreenshotForm
     {
-        public FogBugzForm() : base()
-        {
-        }
     }
 }

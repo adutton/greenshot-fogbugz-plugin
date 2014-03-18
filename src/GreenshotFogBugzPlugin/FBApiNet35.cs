@@ -158,6 +158,44 @@ public class FBApiNet35
         return DocFromXml(ListAreas(onlyWritable, ixProject, ixArea)).SelectNodes("/response/areas/area");
     }
 
+    public String ListStatuses(int ixCategory = -1, Boolean fResovled = false)
+    {
+        var args = new Dictionary<String, String>();
+        if (ixCategory > -1) args.Add("ixCategory", ixCategory.ToString());
+        if (fResovled) args.Add("fResolved", "1ok ");
+        return Cmd("listStatuses", args);
+    }
+
+    public XmlNodeList XListStatuses(int ixCategory = -1, Boolean fResovled = false)
+    {
+        return DocFromXml(ListStatuses(ixCategory, fResovled)).SelectNodes("/response/statuses/status");
+    }
+
+    public String ListPeople(Boolean fIncludeActive = true,
+        Boolean fIncludeNormal = true,
+        Boolean fIncludeDeleted = false,
+        Boolean fIncludeCommunity = false,
+        Boolean fIncludeVirtual = false)
+    {
+        var args = new Dictionary<String, String>();
+        if (fIncludeActive) args.Add("fIncludeActive", "1");
+        if (fIncludeNormal) args.Add("fIncludeNormal", "1");
+        if (fIncludeDeleted) args.Add("fIncludeDeleted", "1");
+        if (fIncludeCommunity) args.Add("fIncludeCommunity", "1");
+        if (fIncludeVirtual) args.Add("fIncludeVirtual", "1");
+        return Cmd("listPeople", args);
+    }
+
+    public XmlNodeList XListPeople(Boolean fIncludeActive = true,
+        Boolean fIncludeNormal = true,
+        Boolean fIncludeDeleted = false,
+        Boolean fIncludeCommunity = false,
+        Boolean fIncludeVirtual = false)
+    {
+        return
+            DocFromXml(ListPeople(fIncludeActive, fIncludeNormal, fIncludeDeleted, fIncludeCommunity, fIncludeVirtual))
+                .SelectNodes("/response/people/person");
+    }
     #endregion
 
     #region Scheduling
