@@ -138,11 +138,16 @@ namespace GreenshotFogBugzPlugin.Forms
             DataBindStatuses();
         }
 
-        #endregion
-
         private void tableLayoutPanel1_Paint(object sender, System.Windows.Forms.PaintEventArgs e)
         {
 
         }
+
+        private void btnCreate_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        #endregion
     }
 }
