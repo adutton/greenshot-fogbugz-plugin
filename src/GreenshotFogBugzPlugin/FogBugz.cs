@@ -110,10 +110,12 @@ public class FogBugz
     {
         var fb = new FBApiNet35(m_server, m_token);
 
-        var cmds = new Dictionary<string, string>();
-        cmds.Add("sTitle", caption);
-        cmds.Add("sEvent", caption);
-        cmds.Add("cols", "ixBug");
+        var cmds = new Dictionary<string, string>
+        {
+            {"sTitle", caption},
+            {"sEvent", caption},
+            {"cols", "ixBug"}
+        };
         var output = fb.XCmd("new", cmds, EncodeSingleFileForFogBugz(filename, imageData));
 
         var caseNumber = output.InnerText;

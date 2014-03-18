@@ -55,8 +55,10 @@ namespace GreenshotFogBugzPlugin.Forms
 
             ResultsListBox.Items.Add(c_langMakeNewCase);
             ResultsListBox.SelectedIndex = 0;
-            m_searchTimer = new Timer();
-            m_searchTimer.Interval = searchDelayMilliseconds;
+            m_searchTimer = new Timer
+            {
+                Interval = searchDelayMilliseconds
+            };
             m_searchTimer.Tick += searchTimerTick;
 
             KeywordsTextBox.Focus();

@@ -56,6 +56,10 @@ public class FBApiNet35
 
     #region source data
 
+    #region Case Meta Data (Projects, Areas, Categories, Priorities, Statuses)
+
+    #endregion
+
     #region SearchWritableCases
 
     public string Search(string q)

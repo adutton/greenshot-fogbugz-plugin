@@ -109,6 +109,12 @@
     <Compile Include="Forms\CaseSearchForm.Designer.cs">
       <DependentUpon>CaseSearchForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\CreateCaseForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\CreateCaseForm.Designer.cs">
+      <DependentUpon>CreateCaseForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\FogBugzForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -125,6 +131,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Forms\CaseSearchForm.resx">
       <DependentUpon>CaseSearchForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\CreateCaseForm.resx">
+      <DependentUpon>CreateCaseForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\SettingsForm.resx">
       <DependentUpon>SettingsForm.cs</DependentUpon>
