@@ -146,16 +146,104 @@ public class FogBugz
             }
         };
     }
+
+    public List<Project> ListProjects(Boolean onlyWritable = true)
+    {
+        var fb = new FBApiNet35(m_server, m_token);
+
+        var projects = new List<Project>();
+
+        var projectNodes = fb.XListProjects(onlyWritable);
+
+        foreach (XmlNode projectNode in projectNodes)
+        {
+            projects.Add(new Project
+            {
+                ID = Convert.ToInt32(projectNode["ixProject"].InnerText),
+                ProjectName = projectNode["sProject"].InnerText,
+                OwnerID = Convert.ToInt32(projectNode["ixPersonOwner"].InnerText),
+                OwnerName = projectNode["sPersonOwner"].InnerText,
+                OwnerEmail = projectNode["sEmail"].InnerText,
+                OwnerPhone = projectNode["sPhone"].InnerText,
+                Inbox = Convert.ToBoolean(projectNode["fInbox"].InnerText),
+                WorkflowID = Convert.ToInt32(projectNode["ixWorkflow"].InnerText),
+                Deleted = Convert.ToBoolean(projectNode["fDeleted"].InnerText)
+            });
+        }
+
+        return projects;
+    }
+
+    public List<Area> ListAreas(Boolean onlyWritable = true, int projectID = -1, int areaID = -1)
+    {
+        var fb = new FBApiNet35(m_server, m_token);
+
+        var areas = new List<Area>();
+
+        var areaNodes = fb.XListAreas(onlyWritable, projectID, areaID);
+
+        foreach (XmlNode a in areaNodes)
+        {
+            areas.Add(new Area
+            {
+                ID = Convert.ToInt32(a["ixArea"].InnerText),
+                AreaName = a["sArea"].InnerText,
+                ProjectID = Convert.ToInt32(a["ixProject"].InnerText),
+                ProjectName = a["sProject"].InnerText,
+                OwnerID = String.IsNullOrEmpty(a["ixPersonOwner"].InnerText) ? -1 : Convert.ToInt32(a["ixPersonOwner"].InnerText),
+                OwnerName = a["sPersonOwner"].InnerText,
+                Type = (AreaType)Convert.ToInt32(a["nType"].InnerText),
+                DocumentsTrained = Convert.ToInt32(a["cDoc"].InnerText),
+                Deleted = false
+            });
+        }
+
+        return areas;
+    }
 }
 
 public class SearchResult
 {
-    public int CaseId;
-    public string Title;
+    public int CaseId { get; set; }
+    public string Title { get; set; }
 }
 
 public class SearchResults
 {
-    public List<SearchResult> Results;
-    public int TotalResults;
+    public List<SearchResult> Results { get; set; }
+    public int TotalResults { get; set; }
+}
+
+public class Project
+{
+    public Boolean Deleted { get; set; }
+    public int ID { get; set; }
+    public Boolean Inbox { get; set; }
+    public String ProjectName { get; set; }
+    public String OwnerEmail { get; set; }
+    public int OwnerID { get; set; }
+    public String OwnerName { get; set; }
+    public String OwnerPhone { get; set; }
+    public int WorkflowID { get; set; }
+}
+
+public enum AreaType
+{
+    Normal=0,
+    NotSpam=1,
+    Undecided=2,
+    Spam=3
+}
+
+public class Area
+{
+    public int ID { get; set; }
+    public String AreaName { get; set; }
+    public int OwnerID { get; set; }
+    public String OwnerName { get; set; }
+    public int ProjectID { get; set; }
+    public string ProjectName { get; set; }
+    public AreaType Type { get; set; }
+    public Boolean Deleted { get; set; }
+    public int DocumentsTrained { get; set; }
 }

@@ -44,6 +44,7 @@ namespace GreenshotFogBugzPlugin.Forms
             this.CaptionTextBox = new System.Windows.Forms.TextBox();
             this.SendToButton = new System.Windows.Forms.Button();
             this.QuitButton = new System.Windows.Forms.Button();
+            this.btnNewCase = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -112,18 +113,31 @@ namespace GreenshotFogBugzPlugin.Forms
             // 
             this.QuitButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.QuitButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.QuitButton.Location = new System.Drawing.Point(408, 295);
+            this.QuitButton.Location = new System.Drawing.Point(12, 295);
             this.QuitButton.Name = "QuitButton";
             this.QuitButton.Size = new System.Drawing.Size(75, 23);
             this.QuitButton.TabIndex = 6;
             this.QuitButton.Text = "&Cancel";
             this.QuitButton.UseVisualStyleBackColor = true;
             // 
+            // btnNewCase
+            // 
+            this.btnNewCase.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnNewCase.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.btnNewCase.Location = new System.Drawing.Point(408, 295);
+            this.btnNewCase.Name = "btnNewCase";
+            this.btnNewCase.Size = new System.Drawing.Size(75, 23);
+            this.btnNewCase.TabIndex = 7;
+            this.btnNewCase.Text = "&Create New";
+            this.btnNewCase.UseVisualStyleBackColor = true;
+            this.btnNewCase.Click += new System.EventHandler(this.btnNewCase_Click);
+            // 
             // CaseSearchForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(576, 326);
+            this.Controls.Add(this.btnNewCase);
             this.Controls.Add(this.QuitButton);
             this.Controls.Add(this.SendToButton);
             this.Controls.Add(this.CaptionTextBox);
@@ -147,5 +161,6 @@ namespace GreenshotFogBugzPlugin.Forms
 		private System.Windows.Forms.ListBox ResultsListBox;
 		private System.Windows.Forms.TextBox KeywordsTextBox;
 		private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button btnNewCase;
 	}
 }

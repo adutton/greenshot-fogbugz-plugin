@@ -16,11 +16,11 @@ namespace GreenshotFogBugzPlugin.Forms
     {
         // TODO: Move this to a language setting
         private const string c_langMakeNewCase = "**** Create new case *****";
+        private readonly ICaptureDetails m_captureDetails;
         private readonly MemoryStream m_captureStream;
         private readonly FogBugzConfiguration m_cfg;
         private readonly string m_filename;
-        private ICaptureDetails m_captureDetails;
-        private IGreenshotHost m_host;
+        private readonly IGreenshotHost m_host;
         private Timer m_searchTimer;
 
         public CaseSearchForm(FogBugzConfiguration cfg,
@@ -97,42 +97,27 @@ namespace GreenshotFogBugzPlugin.Forms
             var backgroundForm = BackgroundForm.ShowAndWait(Language.GetString("fogbugz", LangKey.fogbugz),
                 Language.GetString("fogbugz", LangKey.communication_wait));
 
-            var success = false;
-            var caseId = 0;
 
-            if (ResultsListBox.SelectedIndex == 0)
-            {
-                // TODO: Open new case dialog
-                var fb = new FogBugz(new Uri(m_cfg.FogBugzServerUrl), m_cfg.FogBugzLoginToken);
-                caseId = fb.CreateNewCase(CaptionTextBox.Text, m_filename, m_captureStream.GetBuffer());
-                success = true;
-            }
-            else
-            {
-                var item = ResultsListBox.SelectedItem.ToString();
-                caseId = Convert.ToInt32(item.Substring(0, item.IndexOf(" ")));
+            var item = ResultsListBox.SelectedItem.ToString();
+            var caseId = Convert.ToInt32(item.Substring(0, item.IndexOf(" ")));
 
-                var fb = new FogBugz(new Uri(m_cfg.FogBugzServerUrl), m_cfg.FogBugzLoginToken);
-                fb.AttachImageToExistingCase(caseId, CaptionTextBox.Text, m_filename, m_captureStream.GetBuffer());
-                success = true;
-            }
+            var fb = new FogBugz(new Uri(m_cfg.FogBugzServerUrl), m_cfg.FogBugzLoginToken);
+            fb.AttachImageToExistingCase(caseId, CaptionTextBox.Text, m_filename, m_captureStream.GetBuffer());
+
 
             // Set the configuration for next time
-            if (success)
+            m_cfg.LastCaseId = caseId;
+            try
             {
-                m_cfg.LastCaseId = caseId;
-                try
-                {
-                    var caseUrl = string.Concat(m_cfg.FogBugzServerUrl, "?", caseId);
-                    if (m_cfg.CopyCaseUrlToClipboardAfterSend)
-                        Clipboard.SetText(caseUrl);
-                    if (m_cfg.OpenBrowserAfterSend)
-                        Process.Start(caseUrl);
-                }
-                catch
-                {
-                    // Throw away "after-upload" exceptions
-                }
+                var caseUrl = string.Concat(m_cfg.FogBugzServerUrl, "?", caseId);
+                if (m_cfg.CopyCaseUrlToClipboardAfterSend)
+                    Clipboard.SetText(caseUrl);
+                if (m_cfg.OpenBrowserAfterSend)
+                    Process.Start(caseUrl);
+            }
+            catch
+            {
+                // Throw away "after-upload" exceptions
             }
             backgroundForm.CloseDialog();
         }
@@ -193,6 +178,23 @@ namespace GreenshotFogBugzPlugin.Forms
             SendToButtonClick(sender, e);
             DialogResult = DialogResult.OK;
             Close();
+        }
+
+        private void btnNewCase_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var caseCreateForm = new CreateCaseForm(m_cfg, m_host, m_filename, m_captureDetails, m_captureStream);
+
+                if (caseCreateForm.ShowDialog() == DialogResult.OK)
+                {
+                    Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
     }
 }

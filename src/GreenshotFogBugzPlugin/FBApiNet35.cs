@@ -56,10 +56,6 @@ public class FBApiNet35
 
     #region source data
 
-    #region Case Meta Data (Projects, Areas, Categories, Priorities, Statuses)
-
-    #endregion
-
     #region SearchWritableCases
 
     public string Search(string q)
@@ -102,7 +98,7 @@ public class FBApiNet35
 
     #endregion
 
-    #region Editing Cases
+    #region Case Meta Data (Projects, Areas, Categories, Priorities, Statuses)
 
     public string ListProjects()
     {
@@ -146,6 +142,20 @@ public class FBApiNet35
     public XmlNodeList XListFixFors(int ixProject)
     {
         return DocFromXml(ListFixFors(ixProject)).SelectNodes("/response/fixfors/fixfor");
+    }
+
+    public String ListAreas(bool onlyWritable = false, int ixProject = -1, int ixArea = -1)
+    {
+        var args = new Dictionary<String, String>();
+        if (onlyWritable) args.Add("fWrite", "1");
+        if (ixProject > -1) args.Add("ixProject", ixProject.ToString());
+        if (ixArea > -1) args.Add("ixProject", ixArea.ToString());
+        return Cmd("listAreas", args);
+    }
+
+    public XmlNodeList XListAreas(bool onlyWritable = false, int ixProject = -1, int ixArea = -1)
+    {
+        return DocFromXml(ListAreas(onlyWritable, ixProject, ixArea)).SelectNodes("/response/areas/area");
     }
 
     #endregion
