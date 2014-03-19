@@ -117,7 +117,8 @@ public class FogBugz
         Int32 milestoneID = -1,
         Int32 categoryID = -1,
         Int32 assignedToPersonID = -1,
-        Int32 statusID = -1)
+        Int32 statusID = -1,
+        DateTime? dueDate = null)
     {
         var fb = new FBApiNet35(m_server, m_token);
 
@@ -134,6 +135,7 @@ public class FogBugz
         if (categoryID > 0) cmds.Add("ixCategory", categoryID.ToString(CultureInfo.InvariantCulture));
         if (assignedToPersonID > 0) cmds.Add("ixPersonAssignedTo", assignedToPersonID.ToString(CultureInfo.InvariantCulture));
         if (statusID > 0) cmds.Add("ixStatus", statusID.ToString(CultureInfo.InvariantCulture));
+        if (dueDate != null) cmds.Add("dtDue", dueDate.Value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"));
 
         var output = fb.XCmd("new", cmds, EncodeSingleFileForFogBugz(filename, imageData));
 

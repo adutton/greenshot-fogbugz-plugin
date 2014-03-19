@@ -192,7 +192,10 @@ namespace GreenshotFogBugzPlugin.Forms
             var createCaseForm = new CreateCaseForm(_mCfg, _mHost, _mFilename, _mCaptureDetails, _mCaptureStream);
 
             if (createCaseForm.ShowDialog() == DialogResult.OK)
+            {
+                DialogResult = DialogResult.OK;
                 Close();
+            }
         }
     }
 }

@@ -201,7 +201,8 @@ namespace GreenshotFogBugzPlugin.Forms
                 milestoneID,
                 categoryID,
                 assignedToPersonID,
-                statusID);
+                statusID,
+                dtDueDate.Value);
 
             // Set the configuration for next time
             m_cfg.LastCaseId = caseId;
