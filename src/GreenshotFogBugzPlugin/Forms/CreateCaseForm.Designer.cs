@@ -60,7 +60,7 @@
             this.lbCaseTitle.Location = new System.Drawing.Point(3, 7);
             this.lbCaseTitle.Name = "lbCaseTitle";
             this.lbCaseTitle.Size = new System.Drawing.Size(27, 13);
-            this.lbCaseTitle.TabIndex = 0;
+            this.lbCaseTitle.TabIndex = 5;
             this.lbCaseTitle.Text = "Title";
             // 
             // txtTitle
@@ -70,7 +70,7 @@
             this.txtTitle.Location = new System.Drawing.Point(3, 23);
             this.txtTitle.Name = "txtTitle";
             this.txtTitle.Size = new System.Drawing.Size(966, 20);
-            this.txtTitle.TabIndex = 1;
+            this.txtTitle.TabIndex = 0;
             // 
             // lblProject
             // 
@@ -79,7 +79,7 @@
             this.lblProject.Location = new System.Drawing.Point(3, 57);
             this.lblProject.Name = "lblProject";
             this.lblProject.Size = new System.Drawing.Size(40, 13);
-            this.lblProject.TabIndex = 2;
+            this.lblProject.TabIndex = 3;
             this.lblProject.Text = "Project";
             // 
             // btnCreate
@@ -88,7 +88,7 @@
             this.btnCreate.Location = new System.Drawing.Point(894, 671);
             this.btnCreate.Name = "btnCreate";
             this.btnCreate.Size = new System.Drawing.Size(75, 23);
-            this.btnCreate.TabIndex = 4;
+            this.btnCreate.TabIndex = 9;
             this.btnCreate.Text = "Create";
             this.btnCreate.UseVisualStyleBackColor = true;
             this.btnCreate.Click += new System.EventHandler(this.btnCreate_Click);
@@ -99,7 +99,7 @@
             this.btnCancel.Location = new System.Drawing.Point(3, 671);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(75, 23);
-            this.btnCancel.TabIndex = 5;
+            this.btnCancel.TabIndex = 10;
             this.btnCancel.Text = "Cancel";
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
@@ -114,7 +114,7 @@
             this.cbProject.Location = new System.Drawing.Point(3, 73);
             this.cbProject.Name = "cbProject";
             this.cbProject.Size = new System.Drawing.Size(317, 21);
-            this.cbProject.TabIndex = 6;
+            this.cbProject.TabIndex = 1;
             // 
             // cbMilestone
             // 
@@ -126,7 +126,7 @@
             this.cbMilestone.Location = new System.Drawing.Point(650, 73);
             this.cbMilestone.Name = "cbMilestone";
             this.cbMilestone.Size = new System.Drawing.Size(319, 21);
-            this.cbMilestone.TabIndex = 8;
+            this.cbMilestone.TabIndex = 3;
             // 
             // lblMilestone
             // 
@@ -158,7 +158,7 @@
             this.cbArea.Location = new System.Drawing.Point(326, 73);
             this.cbArea.Name = "cbArea";
             this.cbArea.Size = new System.Drawing.Size(318, 21);
-            this.cbArea.TabIndex = 8;
+            this.cbArea.TabIndex = 2;
             // 
             // lblCategory
             // 
@@ -180,7 +180,7 @@
             this.cbCategory.Location = new System.Drawing.Point(3, 123);
             this.cbCategory.Name = "cbCategory";
             this.cbCategory.Size = new System.Drawing.Size(317, 21);
-            this.cbCategory.TabIndex = 6;
+            this.cbCategory.TabIndex = 4;
             // 
             // lblStatus
             // 
@@ -202,7 +202,7 @@
             this.cbStatus.Location = new System.Drawing.Point(650, 123);
             this.cbStatus.Name = "cbStatus";
             this.cbStatus.Size = new System.Drawing.Size(319, 21);
-            this.cbStatus.TabIndex = 8;
+            this.cbStatus.TabIndex = 6;
             // 
             // lblAssignedTo
             // 
@@ -224,7 +224,7 @@
             this.cbAssignedTo.Location = new System.Drawing.Point(326, 123);
             this.cbAssignedTo.Name = "cbAssignedTo";
             this.cbAssignedTo.Size = new System.Drawing.Size(318, 21);
-            this.cbAssignedTo.TabIndex = 8;
+            this.cbAssignedTo.TabIndex = 5;
             // 
             // txtDescription
             // 
@@ -236,7 +236,7 @@
             this.txtDescription.Multiline = true;
             this.txtDescription.Name = "txtDescription";
             this.txtDescription.Size = new System.Drawing.Size(966, 452);
-            this.txtDescription.TabIndex = 1;
+            this.txtDescription.TabIndex = 8;
             this.txtDescription.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtDescription_KeyDown);
             // 
             // tableLayoutPanel1
@@ -281,7 +281,7 @@
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel1.Size = new System.Drawing.Size(972, 697);
-            this.tableLayoutPanel1.TabIndex = 9;
+            this.tableLayoutPanel1.TabIndex = 0;
             this.tableLayoutPanel1.Paint += new System.Windows.Forms.PaintEventHandler(this.tableLayoutPanel1_Paint);
             // 
             // label1
@@ -302,7 +302,7 @@
             this.dtDueDate.Location = new System.Drawing.Point(3, 173);
             this.dtDueDate.Name = "dtDueDate";
             this.dtDueDate.Size = new System.Drawing.Size(317, 20);
-            this.dtDueDate.TabIndex = 10;
+            this.dtDueDate.TabIndex = 7;
             // 
             // CreateCaseForm
             // 
