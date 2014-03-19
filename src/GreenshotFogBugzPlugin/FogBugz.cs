@@ -2,6 +2,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Xml;
 using FogBugzTestHarness;
 
@@ -106,16 +108,33 @@ public class FogBugz
         return results;
     }
 
-    public int CreateNewCase(string caption, string filename, byte[] imageData)
+    public int CreateNewCase(string title,
+        string description,
+        string filename,
+        byte[] imageData,
+        Int32 projectID = -1,
+        Int32 areaID = -1,
+        Int32 milestoneID = -1,
+        Int32 categoryID = -1,
+        Int32 assignedToPersonID = -1,
+        Int32 statusID = -1)
     {
         var fb = new FBApiNet35(m_server, m_token);
 
         var cmds = new Dictionary<string, string>
         {
-            {"sTitle", caption},
-            {"sEvent", caption},
+            {"sTitle", title},
+            {"sEvent", description},
             {"cols", "ixBug"}
         };
+
+        if (projectID > 0) cmds.Add("ixProject", projectID.ToString(CultureInfo.InvariantCulture));
+        if (areaID > 0) cmds.Add("ixArea", areaID.ToString(CultureInfo.InvariantCulture));
+        if (milestoneID > 0) cmds.Add("ixFixFor", milestoneID.ToString(CultureInfo.InvariantCulture));
+        if (categoryID > 0) cmds.Add("ixCategory", categoryID.ToString(CultureInfo.InvariantCulture));
+        if (assignedToPersonID > 0) cmds.Add("ixPersonAssignedTo", assignedToPersonID.ToString(CultureInfo.InvariantCulture));
+        if (statusID > 0) cmds.Add("ixStatus", statusID.ToString(CultureInfo.InvariantCulture));
+
         var output = fb.XCmd("new", cmds, EncodeSingleFileForFogBugz(filename, imageData));
 
         var caseNumber = output.InnerText;
@@ -151,13 +170,10 @@ public class FogBugz
     {
         var fb = new FBApiNet35(m_server, m_token);
 
-        var projects = new List<Project>();
-
         var projectNodes = fb.XListProjects(onlyWritable);
 
-        foreach (XmlNode projectNode in projectNodes)
-        {
-            projects.Add(new Project
+        return (from XmlNode projectNode in projectNodes
+            select new Project
             {
                 ProjectID = Convert.ToInt32(projectNode["ixProject"].InnerText),
                 ProjectName = projectNode["sProject"].InnerText,
@@ -168,23 +184,17 @@ public class FogBugz
                 Inbox = Convert.ToBoolean(projectNode["fInbox"].InnerText),
                 WorkflowID = Convert.ToInt32(projectNode["ixWorkflow"].InnerText),
                 Deleted = Convert.ToBoolean(projectNode["fDeleted"].InnerText)
-            });
-        }
-
-        return projects;
+            }).ToList();
     }
 
     public List<Area> ListAreas(Boolean onlyWritable = true, int projectID = -1, int areaID = -1)
     {
         var fb = new FBApiNet35(m_server, m_token);
 
-        var areas = new List<Area>();
-
         var areaNodes = fb.XListAreas(onlyWritable, projectID, areaID);
 
-        foreach (XmlNode areaNode in areaNodes)
-        {
-            areas.Add(new Area
+        return (from XmlNode areaNode in areaNodes
+            select new Area
             {
                 AreaID = Convert.ToInt32(areaNode["ixArea"].InnerText),
                 AreaName = areaNode["sArea"].InnerText,
@@ -195,23 +205,17 @@ public class FogBugz
                 Type = (AreaType) Convert.ToInt32(areaNode["nType"].InnerText),
                 DocumentsTrained = Convert.ToInt32(areaNode["cDoc"].InnerText),
                 Deleted = false
-            });
-        }
-
-        return areas;
+            }).ToList();
     }
 
     public List<Category> ListCategories()
     {
         var fb = new FBApiNet35(m_server, m_token);
 
-        var categories = new List<Category>();
-
         var categoriesNodes = fb.XListCategories();
 
-        foreach (XmlNode categoryNode in categoriesNodes)
-        {
-            categories.Add(new Category
+        return (from XmlNode categoryNode in categoriesNodes
+            select new Category
             {
                 CategoryID = Convert.ToInt32(categoryNode["ixCategory"].InnerText),
                 CategoryName = categoryNode["sCategory"].InnerText,
@@ -219,23 +223,17 @@ public class FogBugz
                 DefaultResolvedStatusID = Convert.ToInt32(categoryNode["ixStatusDefault"].InnerText),
                 DefaultActiveStatusID = Convert.ToInt32(categoryNode["ixStatusDefaultActive"].InnerText),
                 IsScheduleItem = Convert.ToBoolean(categoryNode["fIsScheduleItem"].InnerText)
-            });
-        }
-
-        return categories;
+            }).ToList();
     }
 
     public List<Status> ListStatuses(Int32 categoryID = -1, Boolean onlyResovled = false)
     {
         var fb = new FBApiNet35(m_server, m_token);
 
-        var statuses = new List<Status>();
-
         var statusNodes = fb.XListStatuses(categoryID, onlyResovled);
 
-        foreach (XmlNode statusNode in statusNodes)
-        {
-            statuses.Add(new Status
+        return (from XmlNode statusNode in statusNodes
+            select new Status
             {
                 StatusID = Convert.ToInt32(statusNode["ixStatus"].InnerText),
                 StatusName = statusNode["sStatus"].InnerText,
@@ -245,10 +243,7 @@ public class FogBugz
                 Duplicate = Convert.ToBoolean(statusNode["fDuplicate"].InnerText),
                 Deleted = Convert.ToBoolean(statusNode["fDeleted"].InnerText),
                 Order = Convert.ToInt32(statusNode["iOrder"].InnerText)
-            });
-        }
-
-        return statuses;
+            }).ToList();
     }
 
     public List<Person> ListPeople(Boolean includeActive = true,
@@ -259,13 +254,10 @@ public class FogBugz
     {
         var fb = new FBApiNet35(m_server, m_token);
 
-        var people = new List<Person>();
-
         var peopleNodes = fb.XListPeople(includeActive, includeNormal, includeDeleted, includeCommunity, includeVirtual);
 
-        foreach (XmlNode personNode in peopleNodes)
-        {
-            people.Add(new Person
+        return (from XmlNode personNode in peopleNodes
+            select new Person
             {
                 PersonID = Convert.ToInt32(personNode["ixPerson"].InnerText),
                 FullName = personNode["sFullName"].InnerText,
@@ -277,10 +269,23 @@ public class FogBugz
                 Deleted = Convert.ToBoolean(personNode["fDeleted"].InnerText),
                 Notify = Convert.ToBoolean(personNode["fNotify"].InnerText),
                 Homepage = personNode["sHomepage"].InnerText
-            });
-        }
+            }).ToList();
+    }
 
-        return people;
+    public List<Milestone> ListMilestones(Int32 projectID = -1)
+    {
+        var fb = new FBApiNet35(m_server, m_token);
+
+        var fixForNodes = fb.XListFixFors(projectID);
+
+        return (from XmlNode fixForNode in fixForNodes
+            select new Milestone
+            {
+                MilestoneID = Convert.ToInt32(fixForNode["ixFixFor"].InnerText),
+                MilestoneName = fixForNode["sFixFor"].InnerText,
+                Inactive = Convert.ToBoolean(fixForNode["fDeleted"].InnerText),
+                ProjectID = String.IsNullOrEmpty(fixForNode["ixProject"].InnerText) ? -1 : Convert.ToInt32(fixForNode["ixProject"].InnerText)
+            }).ToList();
     }
 }
 
@@ -366,4 +371,12 @@ public class Person
     public Boolean Deleted { get; set; }
     public Boolean Notify { get; set; }
     public String Homepage { get; set; }
+}
+
+public class Milestone
+{
+    public Int32 MilestoneID { get; set; }
+    public String MilestoneName { get; set; }
+    public Boolean Inactive { get; set; }
+    public Int32 ProjectID { get; set; }
 }

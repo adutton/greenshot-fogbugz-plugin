@@ -45,8 +45,10 @@
             this.cbStatus = new System.Windows.Forms.ComboBox();
             this.lblAssignedTo = new System.Windows.Forms.Label();
             this.cbAssignedTo = new System.Windows.Forms.ComboBox();
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.txtDescription = new System.Windows.Forms.TextBox();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.label1 = new System.Windows.Forms.Label();
+            this.dtDueDate = new System.Windows.Forms.DateTimePicker();
             this.tableLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -69,7 +71,6 @@
             this.txtTitle.Name = "txtTitle";
             this.txtTitle.Size = new System.Drawing.Size(966, 20);
             this.txtTitle.TabIndex = 1;
-            this.txtTitle.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
             // 
             // lblProject
             // 
@@ -101,6 +102,7 @@
             this.btnCancel.TabIndex = 5;
             this.btnCancel.Text = "Cancel";
             this.btnCancel.UseVisualStyleBackColor = true;
+            this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
             // 
             // cbProject
             // 
@@ -224,18 +226,18 @@
             this.cbAssignedTo.Size = new System.Drawing.Size(318, 21);
             this.cbAssignedTo.TabIndex = 8;
             // 
-            // textBox1
+            // txtDescription
             // 
-            this.textBox1.AcceptsReturn = true;
-            this.textBox1.AcceptsTab = true;
-            this.tableLayoutPanel1.SetColumnSpan(this.textBox1, 3);
-            this.textBox1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.textBox1.Location = new System.Drawing.Point(3, 173);
-            this.textBox1.Multiline = true;
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(966, 492);
-            this.textBox1.TabIndex = 1;
-            this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
+            this.txtDescription.AcceptsReturn = true;
+            this.txtDescription.AcceptsTab = true;
+            this.tableLayoutPanel1.SetColumnSpan(this.txtDescription, 3);
+            this.txtDescription.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtDescription.Location = new System.Drawing.Point(3, 213);
+            this.txtDescription.Multiline = true;
+            this.txtDescription.Name = "txtDescription";
+            this.txtDescription.Size = new System.Drawing.Size(966, 452);
+            this.txtDescription.TabIndex = 1;
+            this.txtDescription.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtDescription_KeyDown);
             // 
             // tableLayoutPanel1
             // 
@@ -247,7 +249,7 @@
             this.tableLayoutPanel1.Controls.Add(this.cbProject, 0, 3);
             this.tableLayoutPanel1.Controls.Add(this.cbStatus, 2, 5);
             this.tableLayoutPanel1.Controls.Add(this.lblProject, 0, 2);
-            this.tableLayoutPanel1.Controls.Add(this.textBox1, 0, 7);
+            this.tableLayoutPanel1.Controls.Add(this.txtDescription, 0, 9);
             this.tableLayoutPanel1.Controls.Add(this.cbCategory, 0, 5);
             this.tableLayoutPanel1.Controls.Add(this.lbCaseTitle, 0, 0);
             this.tableLayoutPanel1.Controls.Add(this.txtTitle, 0, 1);
@@ -259,12 +261,14 @@
             this.tableLayoutPanel1.Controls.Add(this.lblMilestone, 2, 2);
             this.tableLayoutPanel1.Controls.Add(this.lblCategory, 0, 4);
             this.tableLayoutPanel1.Controls.Add(this.cbAssignedTo, 1, 5);
-            this.tableLayoutPanel1.Controls.Add(this.btnCreate, 2, 8);
-            this.tableLayoutPanel1.Controls.Add(this.btnCancel, 0, 8);
+            this.tableLayoutPanel1.Controls.Add(this.btnCreate, 2, 10);
+            this.tableLayoutPanel1.Controls.Add(this.btnCancel, 0, 10);
+            this.tableLayoutPanel1.Controls.Add(this.label1, 0, 6);
+            this.tableLayoutPanel1.Controls.Add(this.dtDueDate, 0, 7);
             this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel1.Location = new System.Drawing.Point(10, 10);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
-            this.tableLayoutPanel1.RowCount = 9;
+            this.tableLayoutPanel1.RowCount = 11;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
@@ -272,11 +276,33 @@
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 10F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel1.Size = new System.Drawing.Size(972, 697);
             this.tableLayoutPanel1.TabIndex = 9;
             this.tableLayoutPanel1.Paint += new System.Windows.Forms.PaintEventHandler(this.tableLayoutPanel1_Paint);
+            // 
+            // label1
+            // 
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(3, 157);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(27, 13);
+            this.label1.TabIndex = 9;
+            this.label1.Text = "Due";
+            // 
+            // dtDueDate
+            // 
+            this.dtDueDate.CustomFormat = "MM/dd/yyyy hh:mm tt";
+            this.dtDueDate.Dock = System.Windows.Forms.DockStyle.Top;
+            this.dtDueDate.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.dtDueDate.Location = new System.Drawing.Point(3, 173);
+            this.dtDueDate.Name = "dtDueDate";
+            this.dtDueDate.Size = new System.Drawing.Size(317, 20);
+            this.dtDueDate.TabIndex = 10;
             // 
             // CreateCaseForm
             // 
@@ -314,7 +340,9 @@
         private System.Windows.Forms.ComboBox cbStatus;
         private System.Windows.Forms.Label lblAssignedTo;
         private System.Windows.Forms.ComboBox cbAssignedTo;
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox txtDescription;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.DateTimePicker dtDueDate;
     }
 }

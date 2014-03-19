@@ -123,7 +123,6 @@ namespace GreenshotFogBugzPlugin.Forms
             // btnNewCase
             // 
             this.btnNewCase.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnNewCase.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.btnNewCase.Location = new System.Drawing.Point(408, 295);
             this.btnNewCase.Name = "btnNewCase";
             this.btnNewCase.Size = new System.Drawing.Size(75, 23);

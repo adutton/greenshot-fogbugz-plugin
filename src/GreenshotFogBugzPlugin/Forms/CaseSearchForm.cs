@@ -15,13 +15,13 @@ namespace GreenshotFogBugzPlugin.Forms
     public partial class CaseSearchForm : FogBugzForm, IDisposable
     {
         // TODO: Move this to a language setting
-        private const string c_langMakeNewCase = "**** Create new case *****";
-        private readonly ICaptureDetails m_captureDetails;
-        private readonly MemoryStream m_captureStream;
-        private readonly FogBugzConfiguration m_cfg;
-        private readonly string m_filename;
-        private readonly IGreenshotHost m_host;
-        private Timer m_searchTimer;
+        private const string CLangMakeNewCase = "**** Create new case *****";
+        private readonly ICaptureDetails _mCaptureDetails;
+        private readonly MemoryStream _mCaptureStream;
+        private readonly FogBugzConfiguration _mCfg;
+        private readonly string _mFilename;
+        private readonly IGreenshotHost _mHost;
+        private Timer _mSearchTimer;
 
         public CaseSearchForm(FogBugzConfiguration cfg,
             IGreenshotHost host,
@@ -31,19 +31,19 @@ namespace GreenshotFogBugzPlugin.Forms
         {
             InitializeComponent();
 
-            m_cfg = cfg;
-            m_host = host;
-            m_filename = filename;
-            m_captureDetails = captureDetails;
-            m_captureStream = captureStream;
+            _mCfg = cfg;
+            _mHost = host;
+            _mFilename = filename;
+            _mCaptureDetails = captureDetails;
+            _mCaptureStream = captureStream;
         }
 
         public new void Dispose()
         {
-            if (m_searchTimer != null)
+            if (_mSearchTimer != null)
             {
-                m_searchTimer.Dispose();
-                m_searchTimer = null;
+                _mSearchTimer.Dispose();
+                _mSearchTimer = null;
             }
 
             base.Dispose();
@@ -53,36 +53,36 @@ namespace GreenshotFogBugzPlugin.Forms
         {
             const int searchDelayMilliseconds = 700;
 
-            ResultsListBox.Items.Add(c_langMakeNewCase);
+            ResultsListBox.Items.Add(CLangMakeNewCase);
             ResultsListBox.SelectedIndex = 0;
-            m_searchTimer = new Timer
+            _mSearchTimer = new Timer
             {
                 Interval = searchDelayMilliseconds
             };
-            m_searchTimer.Tick += searchTimerTick;
+            _mSearchTimer.Tick += SearchTimerTick;
 
             KeywordsTextBox.Focus();
         }
 
         private void CaseSearchFormShown(object sender, EventArgs e)
         {
-            if (m_cfg.LastCaseId != 0)
+            if (_mCfg.LastCaseId != 0)
             {
-                KeywordsTextBox.Text = m_cfg.LastCaseId.ToString();
+                KeywordsTextBox.Text = _mCfg.LastCaseId.ToString();
                 // Trigger a search
-                searchTimerTick(null, null);
+                SearchTimerTick(null, null);
             }
         }
 
-        private void searchTimerTick(object sender, EventArgs e)
+        private void SearchTimerTick(object sender, EventArgs e)
         {
-            const int c_maxResultsToRetrieve = 20;
-            m_searchTimer.Stop();
+            const int cMaxResultsToRetrieve = 20;
+            _mSearchTimer.Stop();
 
             // Retrieve search results from FogBugz
-            var fb = new FogBugz(new Uri(m_cfg.FogBugzServerUrl), m_cfg.FogBugzLoginToken);
+            var fb = new FogBugz(new Uri(_mCfg.FogBugzServerUrl), _mCfg.FogBugzLoginToken);
 
-            var results = fb.SearchWritableCases(KeywordsTextBox.Text, c_maxResultsToRetrieve);
+            var results = fb.SearchWritableCases(KeywordsTextBox.Text, cMaxResultsToRetrieve);
 
             // Insert results
             foreach (SearchResult r in results.Results)
@@ -94,41 +94,48 @@ namespace GreenshotFogBugzPlugin.Forms
 
         private void SendToButtonClick(object sender, EventArgs e)
         {
-            var backgroundForm = BackgroundForm.ShowAndWait(Language.GetString("fogbugz", LangKey.fogbugz),
-                Language.GetString("fogbugz", LangKey.communication_wait));
-
-
-            var item = ResultsListBox.SelectedItem.ToString();
-            var caseId = Convert.ToInt32(item.Substring(0, item.IndexOf(" ")));
-
-            var fb = new FogBugz(new Uri(m_cfg.FogBugzServerUrl), m_cfg.FogBugzLoginToken);
-            fb.AttachImageToExistingCase(caseId, CaptionTextBox.Text, m_filename, m_captureStream.GetBuffer());
-
-
-            // Set the configuration for next time
-            m_cfg.LastCaseId = caseId;
-            try
+            if (ResultsListBox.SelectedIndex == 0)
             {
-                var caseUrl = string.Concat(m_cfg.FogBugzServerUrl, "?", caseId);
-                if (m_cfg.CopyCaseUrlToClipboardAfterSend)
-                    Clipboard.SetText(caseUrl);
-                if (m_cfg.OpenBrowserAfterSend)
-                    Process.Start(caseUrl);
+                btnNewCase_Click(sender, e);
             }
-            catch
+            else
             {
-                // Throw away "after-upload" exceptions
+                var backgroundForm = BackgroundForm.ShowAndWait(Language.GetString("fogbugz", LangKey.fogbugz),
+                    Language.GetString("fogbugz", LangKey.communication_wait));
+
+
+                var item = ResultsListBox.SelectedItem.ToString();
+                var caseId = Convert.ToInt32(item.Substring(0, item.IndexOf(" ")));
+
+                var fb = new FogBugz(new Uri(_mCfg.FogBugzServerUrl), _mCfg.FogBugzLoginToken);
+                fb.AttachImageToExistingCase(caseId, CaptionTextBox.Text, _mFilename, _mCaptureStream.GetBuffer());
+
+
+                // Set the configuration for next time
+                _mCfg.LastCaseId = caseId;
+                try
+                {
+                    var caseUrl = string.Concat(_mCfg.FogBugzServerUrl, "?", caseId);
+                    if (_mCfg.CopyCaseUrlToClipboardAfterSend)
+                        Clipboard.SetText(caseUrl);
+                    if (_mCfg.OpenBrowserAfterSend)
+                        Process.Start(caseUrl);
+                }
+                catch
+                {
+                    // Throw away "after-upload" exceptions
+                }
+                backgroundForm.CloseDialog();
             }
-            backgroundForm.CloseDialog();
         }
 
         private void KeywordsTextBoxTextChanged(object sender, EventArgs e)
         {
-            m_searchTimer.Stop();
-            m_searchTimer.Start();
+            _mSearchTimer.Stop();
+            _mSearchTimer.Start();
             Cursor = Cursors.AppStarting;
             ResultsListBox.Items.Clear();
-            ResultsListBox.Items.Add(c_langMakeNewCase);
+            ResultsListBox.Items.Add(CLangMakeNewCase);
             ResultsListBox.SelectedIndex = 0;
         }
 
@@ -182,19 +189,10 @@ namespace GreenshotFogBugzPlugin.Forms
 
         private void btnNewCase_Click(object sender, EventArgs e)
         {
-            try
-            {
-                var caseCreateForm = new CreateCaseForm(m_cfg, m_host, m_filename, m_captureDetails, m_captureStream);
+            var createCaseForm = new CreateCaseForm(_mCfg, _mHost, _mFilename, _mCaptureDetails, _mCaptureStream);
 
-                if (caseCreateForm.ShowDialog() == DialogResult.OK)
-                {
-                    Close();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
+            if (createCaseForm.ShowDialog() == DialogResult.OK)
+                Close();
         }
     }
 }

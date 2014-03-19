@@ -132,14 +132,14 @@ public class FBApiNet35
         return DocFromXml(ListCategories()).SelectNodes("/response/categories/category");
     }
 
-    public string ListFixFors(int ixProject)
+    public string ListFixFors(int ixProject = -1)
     {
         var args = new Dictionary<string, string>();
-        args.Add("ixProject", ixProject.ToString());
+        if (ixProject > -1) args.Add("ixProject", ixProject.ToString());
         return Cmd("listFixFors", args);
     }
 
-    public XmlNodeList XListFixFors(int ixProject)
+    public XmlNodeList XListFixFors(int ixProject = -1)
     {
         return DocFromXml(ListFixFors(ixProject)).SelectNodes("/response/fixfors/fixfor");
     }
