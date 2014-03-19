@@ -24,23 +24,18 @@ namespace GreenshotFogBugzPlugin.Forms
 
         #region Greenshot Fields
 
-        private readonly MemoryStream m_captureStream;
-        private readonly FogBugzConfiguration m_cfg;
-        private readonly string m_filename;
-        private ICaptureDetails m_captureDetails;
-        private IGreenshotHost m_host;
+        private readonly MemoryStream _mCaptureStream;
+        private readonly string _mFilename;
+        private ICaptureDetails _mCaptureDetails;
+        private IGreenshotHost _mHost;
 
         #endregion
 
         #region FogBugz Fields
 
-        private List<Area> _areas;
-        private List<Category> _categories;
         private FogBugz _fb;
-        private List<Milestone> _milestones;
-        private List<Person> _people;
-        private List<Project> _projects;
-        private List<Status> _statuses;
+        private readonly FogBugzConfiguration _mCfg;
+        private readonly FogBugzData _mData;
 
         #endregion
 
@@ -50,28 +45,24 @@ namespace GreenshotFogBugzPlugin.Forms
             IGreenshotHost host,
             string filename,
             ICaptureDetails captureDetails,
-            MemoryStream captureStream)
+            MemoryStream captureStream,
+            FogBugzData data)
         {
             InitializeComponent();
 
-            m_cfg = cfg;
-            m_host = host;
-            m_filename = filename;
-            m_captureDetails = captureDetails;
-            m_captureStream = captureStream;
+            _mCfg = cfg;
+            _mHost = host;
+            _mFilename = filename;
+            _mCaptureDetails = captureDetails;
+            _mCaptureStream = captureStream;
+            _mData = data;
 
             CaseCreated = false;
         }
 
         private void CreateCaseForm_Load(object sender, EventArgs e)
         {
-            _fb = new FogBugz(new Uri(m_cfg.FogBugzServerUrl), m_cfg.FogBugzLoginToken);
-            _projects = _fb.ListProjects();
-            _areas = _fb.ListAreas();
-            _categories = _fb.ListCategories();
-            _statuses = _fb.ListStatuses();
-            _people = _fb.ListPeople();
-            _milestones = _fb.ListMilestones();
+            _fb = new FogBugz(new Uri(_mCfg.FogBugzServerUrl), _mCfg.FogBugzLoginToken);
 
             DataBindProject();
             DataBindArea();
@@ -88,7 +79,7 @@ namespace GreenshotFogBugzPlugin.Forms
 
         private void DataBindProject()
         {
-            cbProject.DataSource = _projects;
+            cbProject.DataSource = _mData.Projects;
             cbProject.DisplayMember = "ProjectName";
             cbProject.ValueMember = "ProjectID";
             cbProject.SelectedIndexChanged += cbProject_SelectedIndexChanged;
@@ -96,7 +87,7 @@ namespace GreenshotFogBugzPlugin.Forms
 
         private void DataBindArea()
         {
-            cbArea.DataSource = _areas.Where(x => x.ProjectID == Convert.ToInt32(cbProject.SelectedValue)).ToList();
+            cbArea.DataSource = _mData.Areas.Where(x => x.ProjectID == Convert.ToInt32(cbProject.SelectedValue)).ToList();
             cbArea.DisplayMember = "AreaName";
             cbArea.ValueMember = "AreaID";
             cbArea.SelectedIndexChanged += cbArea_SelectedIndexChanged;
@@ -104,7 +95,7 @@ namespace GreenshotFogBugzPlugin.Forms
 
         private void DataBindCategories()
         {
-            cbCategory.DataSource = _categories;
+            cbCategory.DataSource = _mData.Categories;
             cbCategory.DisplayMember = "CategoryName";
             cbCategory.ValueMember = "CategoryID";
             cbCategory.SelectedIndexChanged += cbCategory_SelectedIndexChanged;
@@ -112,10 +103,10 @@ namespace GreenshotFogBugzPlugin.Forms
 
         private void DataBindStatuses()
         {
-            var currentCategory = _categories.FirstOrDefault(x => x.CategoryID == Convert.ToInt32(cbCategory.SelectedValue));
+            var currentCategory = _mData.Categories.FirstOrDefault(x => x.CategoryID == Convert.ToInt32(cbCategory.SelectedValue));
 
             cbStatus.DataSource =
-                _statuses.Where(x => x.CategoryID == Convert.ToInt32(cbCategory.SelectedValue) && !x.WorkDone && !x.Resolved).ToList();
+                _mData.Statuses.Where(x => x.CategoryID == Convert.ToInt32(cbCategory.SelectedValue) && !x.WorkDone && !x.Resolved).ToList();
             cbStatus.DisplayMember = "StatusName";
             cbStatus.ValueMember = "StatusID";
 
@@ -125,11 +116,11 @@ namespace GreenshotFogBugzPlugin.Forms
 
         private void DataBindPeople()
         {
-            cbAssignedTo.DataSource = _people;
+            cbAssignedTo.DataSource = _mData.People;
             cbAssignedTo.DisplayMember = "FullName";
             cbAssignedTo.ValueMember = "PersonID";
 
-            var currentArea = _areas.FirstOrDefault(x => x.AreaID == Convert.ToInt32(cbArea.SelectedValue));
+            var currentArea = _mData.Areas.FirstOrDefault(x => x.AreaID == Convert.ToInt32(cbArea.SelectedValue));
             if (currentArea != null && currentArea.OwnerID != -1)
             {
                 cbAssignedTo.SelectedValue = currentArea.OwnerID;
@@ -138,7 +129,7 @@ namespace GreenshotFogBugzPlugin.Forms
 
         private void DataBindMilestones()
         {
-            cbMilestone.DataSource = _milestones.Where(x => x.ProjectID == 0 || x.ProjectID == Convert.ToInt32(cbProject.SelectedValue)).ToList();
+            cbMilestone.DataSource = _mData.Milestones.Where(x => x.ProjectID == 0 || x.ProjectID == Convert.ToInt32(cbProject.SelectedValue)).ToList();
             cbMilestone.DisplayMember = "MilestoneName";
             cbMilestone.ValueMember = "MilestoneID";
         }
@@ -194,8 +185,8 @@ namespace GreenshotFogBugzPlugin.Forms
 
             var caseId = _fb.CreateNewCase(txtTitle.Text,
                 txtDescription.Text,
-                m_filename,
-                m_captureStream.GetBuffer(),
+                _mFilename,
+                _mCaptureStream.GetBuffer(),
                 projectID,
                 areaID,
                 milestoneID,
@@ -205,13 +196,13 @@ namespace GreenshotFogBugzPlugin.Forms
                 dtDueDate.Value);
 
             // Set the configuration for next time
-            m_cfg.LastCaseId = caseId;
+            _mCfg.LastCaseId = caseId;
             try
             {
-                var caseUrl = string.Concat(m_cfg.FogBugzServerUrl, "?", caseId);
-                if (m_cfg.CopyCaseUrlToClipboardAfterSend)
+                var caseUrl = string.Concat(_mCfg.FogBugzServerUrl, "?", caseId);
+                if (_mCfg.CopyCaseUrlToClipboardAfterSend)
                     Clipboard.SetText(caseUrl);
-                if (m_cfg.OpenBrowserAfterSend)
+                if (_mCfg.OpenBrowserAfterSend)
                     Process.Start(caseUrl);
             }
             catch

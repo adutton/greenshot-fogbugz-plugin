@@ -21,6 +21,7 @@ namespace GreenshotFogBugzPlugin
     {
         private static readonly ILog LOG = LogManager.GetLogger(typeof (FogBugzPlugin));
         private static FogBugzConfiguration config;
+        private static FogBugzData data;
         public static PluginAttribute Attributes;
         private IGreenshotHost host;
         private ToolStripMenuItem itemPlugInRoot;
@@ -67,6 +68,9 @@ namespace GreenshotFogBugzPlugin
 
             PluginUtils.AddToContextMenu(host, itemPlugInRoot);
             Language.LanguageChanged += OnLanguageChanged;
+
+            data = new FogBugzData(config);
+
             return true;
         }
 
@@ -116,6 +120,8 @@ namespace GreenshotFogBugzPlugin
         /// <returns>true if the upload succeeded</returns>
         public bool Upload(ICaptureDetails captureDetails, ISurface surfaceToUpload)
         {
+            data.RefreshData();
+
             var outputSettings = new SurfaceOutputSettings(OutputFormat.jpg, 90, false);
             using (var stream = new MemoryStream())
             {
@@ -125,7 +131,7 @@ namespace GreenshotFogBugzPlugin
                 {
                     var filename = Path.GetFileName(FilenameHelper.GetFilename(OutputFormat.jpg, captureDetails));
 
-                    var caseSearchForm = new CaseSearchForm(config, host, filename, captureDetails, stream);
+                    var caseSearchForm = new CaseSearchForm(config, host, filename, captureDetails, stream, data);
 
                     if (caseSearchForm.ShowDialog() == DialogResult.OK)
                     {

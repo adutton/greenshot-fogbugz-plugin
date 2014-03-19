@@ -19,6 +19,7 @@ namespace GreenshotFogBugzPlugin.Forms
         private readonly ICaptureDetails _mCaptureDetails;
         private readonly MemoryStream _mCaptureStream;
         private readonly FogBugzConfiguration _mCfg;
+        private readonly FogBugzData _mData;
         private readonly string _mFilename;
         private readonly IGreenshotHost _mHost;
         private Timer _mSearchTimer;
@@ -27,7 +28,8 @@ namespace GreenshotFogBugzPlugin.Forms
             IGreenshotHost host,
             string filename,
             ICaptureDetails captureDetails,
-            MemoryStream captureStream)
+            MemoryStream captureStream,
+            FogBugzData data)
         {
             InitializeComponent();
 
@@ -36,6 +38,7 @@ namespace GreenshotFogBugzPlugin.Forms
             _mFilename = filename;
             _mCaptureDetails = captureDetails;
             _mCaptureStream = captureStream;
+            _mData = data;
         }
 
         public new void Dispose()
@@ -189,7 +192,7 @@ namespace GreenshotFogBugzPlugin.Forms
 
         private void btnNewCase_Click(object sender, EventArgs e)
         {
-            var createCaseForm = new CreateCaseForm(_mCfg, _mHost, _mFilename, _mCaptureDetails, _mCaptureStream);
+            var createCaseForm = new CreateCaseForm(_mCfg, _mHost, _mFilename, _mCaptureDetails, _mCaptureStream, _mData);
 
             if (createCaseForm.ShowDialog() == DialogResult.OK)
             {
