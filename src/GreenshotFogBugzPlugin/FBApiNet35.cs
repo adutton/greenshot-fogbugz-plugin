@@ -1,15 +1,27 @@
+#region
+
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Net;
 using System.IO;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
-using System.Collections;
 using FogBugzTestHarness;
+
+#endregion
 
 public class FBApiNet35
 {
+    public delegate void ApiEvent(object sender, string sent, string received);
+
+    private const int c_minFogBugzVersion = 1;
+    private readonly Uri m_fogBugzServer;
+    private string m_email;
+    private bool m_fromLogin;
+    private string m_token;
+
     public FBApiNet35(Uri fogBugzServer)
     {
         m_fogBugzServer = fogBugzServer;
@@ -17,7 +29,7 @@ public class FBApiNet35
     }
 
     /// <summary>
-    /// Re-uses an existing token.  Assumes a login has already taken place
+    ///     Re-uses an existing token.  Assumes a login has already taken place
     /// </summary>
     public FBApiNet35(Uri fogBugzServer, string token)
     {
@@ -25,6 +37,273 @@ public class FBApiNet35
         m_fromLogin = true;
         m_token = token;
     }
+
+    public string Token
+    {
+        get
+        {
+            if (!m_fromLogin && String.IsNullOrEmpty(m_token))
+                throw new Exception("Not logged in...");
+            return m_token;
+        }
+    }
+
+    private string ServerUrlApiCheck { get { return string.Concat(m_fogBugzServer.Scheme, "://", m_fogBugzServer.Host, "/api.xml"); } }
+
+    private string ServerUrlCmd { get { return string.Concat(m_fogBugzServer.Scheme, "://", m_fogBugzServer.Host, "/api.asp"); } }
+
+    #region Strongly Typed API
+
+    #region source data
+
+    #region SearchWritableCases
+
+    public string Search(string q)
+    {
+        return Search(q, "ixBug,sEvent,sTitle,ixProject");
+    }
+
+    // CHANGE: XmlDocument instead of XmlNodeList
+    public XmlDocument XSearch(string q)
+    {
+        return XSearch(q, "ixBug,sEvent,sTitle,ixProject");
+    }
+
+    public string Search(string q, string cols)
+    {
+        return Search(q, cols, 0);
+    }
+
+    // CHANGE: XmlDocument instead of XmlNodeList
+    public XmlDocument XSearch(string q, string cols)
+    {
+        return XSearch(q, cols, 0);
+    }
+
+    public string Search(string q, string cols, int max)
+    {
+        var args = new Dictionary<string, string>();
+        args.Add("q", q);
+        args.Add("cols", cols);
+        args.Add("max", (max <= 0 ? 10000 : max).ToString());
+        return Cmd("search", args);
+    }
+
+    // CHANGE: XmlDocument instead of XmlNodeList
+    public XmlDocument XSearch(string q, string cols, int max)
+    {
+        return DocFromXml(Search(q, cols, max));
+        // CHANGE: Trimmed off .SelectNodes("/response/cases/case")
+    }
+
+    #endregion
+
+    #region Case Meta Data (Projects, Areas, Categories, Priorities, Statuses)
+
+    public string ListProjects()
+    {
+        return ListProjects(false);
+    }
+
+    public XmlNodeList XListProjects()
+    {
+        return XListProjects(false);
+    }
+
+    public string ListProjects(bool onlyWritable)
+    {
+        var args = new Dictionary<string, string>();
+        if (onlyWritable) args.Add("fWrite", "1");
+        return Cmd("listProjects", args);
+    }
+
+    public XmlNodeList XListProjects(bool onlyWritable)
+    {
+        return DocFromXml(ListProjects(onlyWritable)).SelectNodes("/response/projects/project");
+    }
+
+    public string ListCategories()
+    {
+        return Cmd("listCategories");
+    }
+
+    public XmlNodeList XListCategories()
+    {
+        return DocFromXml(ListCategories()).SelectNodes("/response/categories/category");
+    }
+
+    public string ListFixFors(int ixProject = -1)
+    {
+        var args = new Dictionary<string, string>();
+        if (ixProject > -1) args.Add("ixProject", ixProject.ToString());
+        return Cmd("listFixFors", args);
+    }
+
+    public XmlNodeList XListFixFors(int ixProject = -1)
+    {
+        return DocFromXml(ListFixFors(ixProject)).SelectNodes("/response/fixfors/fixfor");
+    }
+
+    public String ListAreas(bool onlyWritable = false, int ixProject = -1, int ixArea = -1)
+    {
+        var args = new Dictionary<String, String>();
+        if (onlyWritable) args.Add("fWrite", "1");
+        if (ixProject > -1) args.Add("ixProject", ixProject.ToString());
+        if (ixArea > -1) args.Add("ixProject", ixArea.ToString());
+        return Cmd("listAreas", args);
+    }
+
+    public XmlNodeList XListAreas(bool onlyWritable = false, int ixProject = -1, int ixArea = -1)
+    {
+        return DocFromXml(ListAreas(onlyWritable, ixProject, ixArea)).SelectNodes("/response/areas/area");
+    }
+
+    public String ListStatuses(int ixCategory = -1, Boolean fResovled = false)
+    {
+        var args = new Dictionary<String, String>();
+        if (ixCategory > -1) args.Add("ixCategory", ixCategory.ToString());
+        if (fResovled) args.Add("fResolved", "1ok ");
+        return Cmd("listStatuses", args);
+    }
+
+    public XmlNodeList XListStatuses(int ixCategory = -1, Boolean fResovled = false)
+    {
+        return DocFromXml(ListStatuses(ixCategory, fResovled)).SelectNodes("/response/statuses/status");
+    }
+
+    public String ListPeople(Boolean fIncludeActive = true,
+        Boolean fIncludeNormal = true,
+        Boolean fIncludeDeleted = false,
+        Boolean fIncludeCommunity = false,
+        Boolean fIncludeVirtual = false)
+    {
+        var args = new Dictionary<String, String>();
+        if (fIncludeActive) args.Add("fIncludeActive", "1");
+        if (fIncludeNormal) args.Add("fIncludeNormal", "1");
+        if (fIncludeDeleted) args.Add("fIncludeDeleted", "1");
+        if (fIncludeCommunity) args.Add("fIncludeCommunity", "1");
+        if (fIncludeVirtual) args.Add("fIncludeVirtual", "1");
+        return Cmd("listPeople", args);
+    }
+
+    public XmlNodeList XListPeople(Boolean fIncludeActive = true,
+        Boolean fIncludeNormal = true,
+        Boolean fIncludeDeleted = false,
+        Boolean fIncludeCommunity = false,
+        Boolean fIncludeVirtual = false)
+    {
+        return
+            DocFromXml(ListPeople(fIncludeActive, fIncludeNormal, fIncludeDeleted, fIncludeCommunity, fIncludeVirtual))
+                .SelectNodes("/response/people/person");
+    }
+    #endregion
+
+    #region Scheduling
+
+    public string StartWork(int ixBug)
+    {
+        var args = new Dictionary<string, string>();
+        args.Add("ixBug", ixBug.ToString());
+        return Cmd("startWork", args);
+    }
+
+    public XmlDocument XStartWork(int ixBug)
+    {
+        return DocFromXml(StartWork(ixBug));
+    }
+
+    public string StopWork()
+    {
+        return Cmd("stopWork");
+    }
+
+    public XmlDocument XStopWork()
+    {
+        return DocFromXml(StopWork());
+    }
+
+    public string NewInterval(int ixBug, DateTime dtStart, DateTime dtEnd)
+    {
+        var args = new Dictionary<string, string>();
+        args.Add("ixBug", ixBug.ToString());
+        args.Add("dtStart", dtStart.ToUniversalTime().ToString("s") + "Z");
+        args.Add("dtEnd", dtEnd.ToUniversalTime().ToString("s") + "Z");
+        return Cmd("newInterval", args);
+    }
+
+    public XmlDocument XNewInterval(int ixBug, DateTime dtStart, DateTime dtEnd)
+    {
+        return DocFromXml(NewInterval(ixBug, dtStart, dtEnd));
+    }
+
+    public string ListIntervals(DateTime dtStart, DateTime dtEnd)
+    {
+        var args = new Dictionary<string, string>();
+        args.Add("dtStart", dtStart.ToUniversalTime().ToString("s") + "Z");
+        args.Add("dtEnd", dtEnd.ToUniversalTime().ToString("s") + "Z");
+        return Cmd("listIntervals", args);
+    }
+
+    public XmlNodeList XListIntervals(DateTime dtStart, DateTime dtEnd)
+    {
+        return DocFromXml(ListIntervals(dtStart, dtEnd)).GetElementsByTagName("interval");
+    }
+
+    public XmlNodeList XListIntervals(DateTime dtStart, DateTime dtEnd, int ixBug)
+    {
+        return DocFromXml(ListIntervals(dtStart, dtEnd)).SelectNodes(string.Concat("/response/intervals/interval[ixBug='", ixBug, "']"));
+    }
+
+    #endregion
+
+    #region Subscriptions
+
+    public string Subscribe(int ixBug, int ixWikiPage)
+    {
+        var args = new Dictionary<string, string>();
+        args.Add("ixBug", ixBug.ToString());
+        args.Add("ixWikiPage", ixWikiPage.ToString());
+        return Cmd("subscribe", args);
+    }
+
+    public XmlDocument XSubscribe(int ixBug, int ixWikiPage)
+    {
+        return DocFromXml(Subscribe(ixBug, ixWikiPage));
+    }
+
+    public string Unsubscribe(int ixBug, int ixWikiPage)
+    {
+        var args = new Dictionary<string, string>();
+        args.Add("ixBug", ixBug.ToString());
+        args.Add("ixWikiPage", ixWikiPage.ToString());
+        return Cmd("unsubscribe", args);
+    }
+
+    public XmlDocument XUnsubscribe(int ixBug, int ixWikiPage)
+    {
+        return DocFromXml(Unsubscribe(ixBug, ixWikiPage));
+    }
+
+    public string View(int ixBug)
+    {
+        var args = new Dictionary<string, string>();
+        args.Add("ixBug", ixBug.ToString());
+        return Cmd("view", args);
+    }
+
+    public XmlDocument XView(int ixBug)
+    {
+        return DocFromXml(View(ixBug));
+    }
+
+    #endregion
+
+    #endregion
+
+    // These are strongly typed methods that wrap specific commands (mostly taken from the APITesting projects
+    // provided on the FogBugz blog.
+
+    #endregion
 
     public LoginResult CheckApi()
     {
@@ -34,16 +313,16 @@ public class FBApiNet35
 
         try
         {
-            HttpWebRequest http = (HttpWebRequest)HttpWebRequest.Create(ServerUrlApiCheck);
-            using (WebResponse response = http.GetResponse())
-            using (Stream r = http.GetResponse().GetResponseStream())
-            using (StreamReader reader = new StreamReader(r))
+            var http = (HttpWebRequest) WebRequest.Create(ServerUrlApiCheck);
+            using (var response = http.GetResponse())
+            using (var r = http.GetResponse().GetResponseStream())
+            using (var reader = new StreamReader(r))
             {
                 apiResponse = reader.ReadToEnd();
                 reader.Close();
             }
         }
-        catch (System.Net.WebException ex)
+        catch (WebException ex)
         {
             if (ex.Status == WebExceptionStatus.ProtocolError)
                 return LoginResult.ServerNotCapable;
@@ -56,8 +335,8 @@ public class FBApiNet35
 
         try
         {
-            Regex versionRegex = new Regex("<minversion>(?<apiVersion>\\d+)</minversion>");
-            Match match = versionRegex.Match(apiResponse);
+            var versionRegex = new Regex("<minversion>(?<apiVersion>\\d+)</minversion>");
+            var match = versionRegex.Match(apiResponse);
 
             if (Int32.Parse(match.Groups["apiVersion"].Value) < c_minFogBugzVersion)
                 return LoginResult.ServerNotCapable;
@@ -79,26 +358,25 @@ public class FBApiNet35
     {
         if (!skipApiCheck)
         {
-            LoginResult result = CheckApi();
+            var result = CheckApi();
             if (result != LoginResult.Ok)
                 return result;
-        }            
+        }
 
         // Now that we know it's a FogBugz instance, try to login
         m_email = email;
         m_fromLogin = false;
         try
         {
-            Dictionary<string, string> args = new Dictionary<string, string>();
+            var args = new Dictionary<string, string>();
             args.Add("email", m_email);
             args.Add("password", password);
-            XmlDocument doc = this.XCmd("logon", args);
-            XmlNodeList tokens = doc.GetElementsByTagName("token");
+            var doc = XCmd("logon", args);
+            var tokens = doc.GetElementsByTagName("token");
             if (tokens.Count != 1)
                 // Error, user/password combo didn't work
                 return LoginResult.AccountNotFound;
-            else
-                m_token = tokens[0].InnerText;
+            m_token = tokens[0].InnerText;
             m_fromLogin = true;
         }
         catch
@@ -111,7 +389,7 @@ public class FBApiNet35
     public void Logout()
     {
         if (m_token != null)
-            this.Cmd("logoff");
+            Cmd("logoff");
 
         m_token = null;
         m_fromLogin = false;
@@ -119,55 +397,54 @@ public class FBApiNet35
 
     public string Cmd(string cmd)
     {
-        return this.Cmd(cmd, new Dictionary<string, string>());
+        return Cmd(cmd, new Dictionary<string, string>());
     }
 
     public XmlDocument XCmd(string cmd)
     {
-        return this.XCmd(cmd, new Dictionary<string, string>());
+        return XCmd(cmd, new Dictionary<string, string>());
     }
 
     public XmlNodeList XCmd(string cmd, string xPath)
     {
-        return this.XCmd(cmd, new Dictionary<string, string>(), xPath);
+        return XCmd(cmd, new Dictionary<string, string>(), xPath);
     }
 
     public string Cmd(string cmd, Dictionary<string, string> args)
     {
-        return this.Cmd(cmd, args, null);
+        return Cmd(cmd, args, null);
     }
 
     public XmlDocument XCmd(string cmd, Dictionary<string, string> args)
     {
-        return this.XCmd(cmd, args, new FogBugzFile[0]);
+        return XCmd(cmd, args, new FogBugzFile[0]);
     }
 
     public XmlNodeList XCmd(string cmd, Dictionary<string, string> args, string xPath)
     {
-        return this.XCmd(cmd, args, null, xPath);
+        return XCmd(cmd, args, null, xPath);
     }
 
     public XmlDocument XCmd(string cmd, Dictionary<string, string> args, FogBugzFile[] files)
     {
-        return DocFromXml(this.Cmd(cmd, args, files));
+        return DocFromXml(Cmd(cmd, args, files));
     }
 
     public XmlNodeList XCmd(string cmd, Dictionary<string, string> args, FogBugzFile[] files, string xPath)
     {
-        return this.XCmd(cmd, args, files).SelectNodes(xPath);
+        return XCmd(cmd, args, files).SelectNodes(xPath);
     }
 
     public string Cmd(string cmd, Dictionary<string, string> args, FogBugzFile[] files)
     {
-        if (args == null) 
+        if (args == null)
             args = new Dictionary<string, string>();
         args.Add("cmd", cmd);
-        if (!String.IsNullOrEmpty(m_token)) 
+        if (!String.IsNullOrEmpty(m_token))
             args.Add("token", m_token);
-        return this.CallRESTAPIFiles(ServerUrlCmd, args, files);
+        return CallRESTAPIFiles(ServerUrlCmd, args, files);
     }
 
-    public delegate void ApiEvent(object sender, string sent, string received);
     public event ApiEvent ApiCalled;
 
     // <summary>
@@ -177,17 +454,17 @@ public class FBApiNet35
     // </summary>
     private string CallRESTAPIFiles(string sURL, Dictionary<string, string> rgArgs, FogBugzFile[] rgFiles)
     {
-        string sBoundaryString = getRandomString(30);
-        string sBoundary = "--" + sBoundaryString;
-        ASCIIEncoding encoding = new ASCIIEncoding();
-        UTF8Encoding utf8encoding = new UTF8Encoding();
-        HttpWebRequest http = (HttpWebRequest)HttpWebRequest.Create(sURL);
+        var sBoundaryString = getRandomString(30);
+        var sBoundary = "--" + sBoundaryString;
+        var encoding = new ASCIIEncoding();
+        var utf8encoding = new UTF8Encoding();
+        var http = (HttpWebRequest) WebRequest.Create(sURL);
         http.Method = "POST";
         http.AllowWriteStreamBuffering = true;
         http.ContentType = "multipart/form-data; boundary=" + sBoundaryString;
-        string vbCrLf = "\r\n";
+        var vbCrLf = "\r\n";
 
-        Queue parts = new Queue();
+        var parts = new Queue();
 
         if (rgArgs == null)
             rgArgs = new Dictionary<string, string>();
@@ -196,7 +473,7 @@ public class FBApiNet35
             rgArgs["fileCount"] = rgFiles.Length.ToString();
 
         // add all the normal arguments
-        foreach (System.Collections.Generic.KeyValuePair<string, string> i in rgArgs)
+        foreach (KeyValuePair<string, string> i in rgArgs)
         {
             parts.Enqueue(encoding.GetBytes(sBoundary + vbCrLf));
             parts.Enqueue(encoding.GetBytes("Content-Type: text/plain; charset=\"utf-8\"" + vbCrLf));
@@ -208,11 +485,11 @@ public class FBApiNet35
         // add all the files
         if (rgFiles != null)
         {
-            for (int i = 0; i < rgFiles.Length; i++)
+            for (var i = 0; i < rgFiles.Length; i++)
             {
                 parts.Enqueue(encoding.GetBytes(sBoundary + vbCrLf));
                 parts.Enqueue(encoding.GetBytes("Content-Disposition: form-data; name=\""));
-                parts.Enqueue(encoding.GetBytes(string.Concat("File", i)));
+                parts.Enqueue(encoding.GetBytes(string.Concat("File", i+1)));
                 parts.Enqueue(encoding.GetBytes("\"; filename=\""));
                 parts.Enqueue(encoding.GetBytes(rgFiles[i].Filename));
                 parts.Enqueue(encoding.GetBytes("\"" + vbCrLf));
@@ -228,7 +505,7 @@ public class FBApiNet35
         parts.Enqueue(encoding.GetBytes(sBoundary + "--"));
 
         // calculate the content length
-        int nContentLength = 0;
+        var nContentLength = 0;
         foreach (Byte[] part in parts)
         {
             nContentLength += part.Length;
@@ -236,8 +513,8 @@ public class FBApiNet35
         http.ContentLength = nContentLength;
 
         // write the post
-        StringBuilder sent = new StringBuilder(nContentLength);
-        using (Stream stream = http.GetRequestStream())
+        var sent = new StringBuilder(nContentLength);
+        using (var stream = http.GetRequestStream())
         {
             foreach (Byte[] part in parts)
             {
@@ -248,260 +525,36 @@ public class FBApiNet35
         }
 
         // read the success
-        using (Stream r = http.GetResponse().GetResponseStream())
+        using (var r = http.GetResponse().GetResponseStream())
         {
-            StreamReader reader = new StreamReader(r);
-            string retValue = reader.ReadToEnd();
+            var reader = new StreamReader(r);
+            var retValue = reader.ReadToEnd();
             reader.Close();
-            if (this.ApiCalled != null)
-                this.ApiCalled(this, sent.ToString(), retValue);
+            if (ApiCalled != null)
+                ApiCalled(this, sent.ToString(), retValue);
             return retValue;
         }
     }
 
     private static XmlDocument DocFromXml(string result)
     {
-        XmlDocument doc = new XmlDocument();
+        var doc = new XmlDocument();
         doc.LoadXml(result);
         return doc;
     }
- 
+
     private string getRandomString(int nLength)
     {
-        string chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
-        string s = "";
-        System.Random rand = new System.Random();
-        for (int i = 0; i < nLength; i++)
+        var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
+        var s = "";
+        var rand = new Random();
+        for (var i = 0; i < nLength; i++)
         {
-            int rnum = (int)Math.Floor((double)rand.Next(0, chars.Length - 1));
+            var rnum = (int) Math.Floor((double) rand.Next(0, chars.Length - 1));
             s += chars.Substring(rnum, 1);
         }
         return s;
     }
-    
-    public string Token
-    {
-        get
-        {
-            if (!m_fromLogin && String.IsNullOrEmpty(m_token)) 
-                throw new Exception("Not logged in...");
-            return m_token;
-        }
-    }
-
-    private string m_token;
-    private string m_email;
-    private bool m_fromLogin;
-    private Uri m_fogBugzServer;
-
-    private const int c_minFogBugzVersion = 1;
-
-    private string ServerUrlApiCheck
-    {
-        get
-        {
-            return string.Concat(m_fogBugzServer.Scheme, "://", m_fogBugzServer.Host, "/api.xml");
-        }
-    }
-
-    private string ServerUrlCmd
-    {
-        get
-        {
-            return string.Concat(m_fogBugzServer.Scheme, "://", m_fogBugzServer.Host, "/api.asp");
-        }
-    }
-
-    #region Strongly Typed API
-    // These are strongly typed methods that wrap specific commands (mostly taken from the APITesting projects
-    // provided on the FogBugz blog.
-
-    #region source data
-
-    #region SearchWritableCases
-
-    public string Search(string q)
-    {
-        return this.Search(q, "ixBug,sEvent,sTitle,ixProject");
-    }
-
-    // CHANGE: XmlDocument instead of XmlNodeList
-    public XmlDocument XSearch(string q)
-    {
-        return this.XSearch(q, "ixBug,sEvent,sTitle,ixProject");
-    }
-
-    public string Search(string q, string cols)
-    {
-        return this.Search(q, cols, 0);
-    }
-
-    // CHANGE: XmlDocument instead of XmlNodeList
-    public XmlDocument XSearch(string q, string cols)
-    {
-        return this.XSearch(q, cols, 0);
-    }
-
-    public string Search(string q, string cols, int max)
-    {
-        Dictionary<string, string> args = new Dictionary<string, string>();
-        args.Add("q", q);
-        args.Add("cols", cols);
-        args.Add("max", (max <= 0 ? 10000 : max).ToString());
-        return this.Cmd("search", args);
-    }
-
-    // CHANGE: XmlDocument instead of XmlNodeList
-    public XmlDocument XSearch(string q, string cols, int max)
-    {
-        return DocFromXml(this.Search(q, cols, max));
-        // CHANGE: Trimmed off .SelectNodes("/response/cases/case")
-    }
-
-
-    #endregion
-
-    #region Editing Cases
-    public string ListProjects()
-    {
-        return this.ListProjects(false);
-    }
-    public XmlNodeList XListProjects()
-    {
-        return XListProjects(false);
-    }
-
-    public string ListProjects(bool onlyWritable)
-    {
-        Dictionary<string, string> args = new Dictionary<string, string>();
-        if (onlyWritable) args.Add("fWrite", "1");
-        return this.Cmd("listProjects", args);
-    }
-    public XmlNodeList XListProjects(bool onlyWritable)
-    {
-        return DocFromXml(this.ListProjects(onlyWritable)).SelectNodes("/response/projects/project");
-    }
-
-    public string ListCategories()
-    {
-        return this.Cmd("listCategories");
-    }
-    public XmlNodeList XListCategories()
-    {
-        return DocFromXml(this.ListCategories()).SelectNodes("/response/categories/category");
-    }
-
-    public string ListFixFors(int ixProject)
-    {
-        Dictionary<string, string> args = new Dictionary<string, string>();
-        args.Add("ixProject", ixProject.ToString());
-        return this.Cmd("listFixFors", args);
-    }
-
-    public XmlNodeList XListFixFors(int ixProject)
-    {
-        return DocFromXml(this.ListFixFors(ixProject)).SelectNodes("/response/fixfors/fixfor");
-    }
-
-    #endregion
-
-    #region Scheduling
-    public string StartWork(int ixBug)
-    {
-        Dictionary<string, string> args = new Dictionary<string, string>();
-        args.Add("ixBug", ixBug.ToString());
-        return this.Cmd("startWork", args);
-    }
-
-    public XmlDocument XStartWork(int ixBug)
-    {
-        return DocFromXml(this.StartWork(ixBug));
-    }
-
-    public string StopWork()
-    {
-        return this.Cmd("stopWork");
-    }
-
-    public XmlDocument XStopWork()
-    {
-        return DocFromXml(this.StopWork());
-    }
-
-    public string NewInterval(int ixBug, DateTime dtStart, DateTime dtEnd)
-    {
-        Dictionary<string, string> args = new Dictionary<string, string>();
-        args.Add("ixBug", ixBug.ToString());
-        args.Add("dtStart", dtStart.ToUniversalTime().ToString("s") + "Z");
-        args.Add("dtEnd", dtEnd.ToUniversalTime().ToString("s") + "Z");
-        return this.Cmd("newInterval", args);
-    }
-    public XmlDocument XNewInterval(int ixBug, DateTime dtStart, DateTime dtEnd)
-    {
-        return DocFromXml(this.NewInterval(ixBug, dtStart, dtEnd));
-    }
-
-    public string ListIntervals(DateTime dtStart, DateTime dtEnd)
-    {
-        Dictionary<string, string> args = new Dictionary<string, string>();
-        args.Add("dtStart", dtStart.ToUniversalTime().ToString("s") + "Z");
-        args.Add("dtEnd", dtEnd.ToUniversalTime().ToString("s") + "Z");
-        return this.Cmd("listIntervals", args);
-    }
-    public XmlNodeList XListIntervals(DateTime dtStart, DateTime dtEnd)
-    {
-        return DocFromXml(this.ListIntervals(dtStart, dtEnd)).GetElementsByTagName("interval");
-    }
-    public XmlNodeList XListIntervals(DateTime dtStart, DateTime dtEnd, int ixBug)
-    {
-        return DocFromXml(this.ListIntervals(dtStart, dtEnd)).SelectNodes(string.Concat("/response/intervals/interval[ixBug='", ixBug, "']"));
-    }
- 
-    #endregion
-
-    #region Subscriptions
-    public string Subscribe(int ixBug, int ixWikiPage)
-    {
-        Dictionary<string, string> args = new Dictionary<string, string>();
-        args.Add("ixBug", ixBug.ToString());
-        args.Add("ixWikiPage", ixWikiPage.ToString());
-        return this.Cmd("subscribe", args);
-    }
-    public XmlDocument XSubscribe(int ixBug, int ixWikiPage)
-    {
-        return DocFromXml(this.Subscribe(ixBug, ixWikiPage));
-    }
-
-    public string Unsubscribe(int ixBug, int ixWikiPage)
-    {
-        Dictionary<string, string> args = new Dictionary<string, string>();
-        args.Add("ixBug", ixBug.ToString());
-        args.Add("ixWikiPage", ixWikiPage.ToString());
-        return this.Cmd("unsubscribe", args);
-    }
-
-    public XmlDocument XUnsubscribe(int ixBug, int ixWikiPage)
-    {
-        return DocFromXml(this.Unsubscribe(ixBug, ixWikiPage));
-    }
-
-    public string View(int ixBug)
-    {
-        Dictionary<string, string> args = new Dictionary<string, string>();
-        args.Add("ixBug", ixBug.ToString());
-        return this.Cmd("view", args);
-    }
-
-    public XmlDocument XView(int ixBug)
-    {
-        return DocFromXml(this.View(ixBug));
-    }
-
-    #endregion
-
-    #endregion
-
-    #endregion
 }
 
 public enum LoginResult

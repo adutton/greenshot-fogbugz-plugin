@@ -1,19 +1,24 @@
+#region
+
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
+using System.Globalization;
+using System.Linq;
 using System.Xml;
 using FogBugzTestHarness;
 
+#endregion
+
 /// <summary>
-/// Interacts with the FogBugz XML API, wrapping the C# FBApi
-/// http://fogbugz.stackexchange.com/fogbugz-xml-api
+///     Interacts with the FogBugz XML API, wrapping the C# FBApi
+///     http://fogbugz.stackexchange.com/fogbugz-xml-api
 /// </summary>
 public class FogBugz
 {
+    private readonly FBApiNet35 m_fb;
+    private readonly Uri m_server;
+    private string m_token;
+
     public FogBugz(Uri server, string token)
     {
         m_server = server;
@@ -21,8 +26,10 @@ public class FogBugz
         m_fb = new FBApiNet35(m_server);
     }
 
+    public string Token { get { return m_token; } }
+
     public LoginResult Login(string email, string password)
-    {        
+    {
         var result = m_fb.Login(email, password);
 
         if (result == LoginResult.Ok)
@@ -37,7 +44,11 @@ public class FogBugz
             throw new InvalidOperationException("Not connected");
 
         if (string.IsNullOrEmpty(query) || query.Trim().Length == 0)
-        	return new SearchResults { Results = new List<SearchResult>(), TotalResults = 0 };
+            return new SearchResults
+            {
+                Results = new List<SearchResult>(),
+                TotalResults = 0
+            };
 
         /*    string[] fakeResults = new string[] {
                 "12345 - Blah Blah Blah - Aaron Dutton",
@@ -69,50 +80,75 @@ public class FogBugz
         */
 
 
-        FBApiNet35 fb = new FBApiNet35(m_server, m_token);
+        var fb = new FBApiNet35(m_server, m_token);
 
-        string finalQuery = "status:open " + query;
-        int caseId = 0;
+        var finalQuery = "status:open " + query;
+        var caseId = 0;
         if (Int32.TryParse(query, out caseId) && caseId > 0)
             finalQuery = string.Concat("status:open ixBug:", caseId);
 
-        SearchResults results = new SearchResults();
+        var results = new SearchResults();
         results.Results = new List<SearchResult>();
-        XmlDocument resultDocument = fb.XSearch(finalQuery, "ixBug,sTitle", maxCaseCount);
+        var resultDocument = fb.XSearch(finalQuery, "ixBug,sTitle", maxCaseCount);
 
-        XmlNode casesNode = resultDocument.SelectSingleNode("/response/cases");
+        var casesNode = resultDocument.SelectSingleNode("/response/cases");
         results.TotalResults = Int32.Parse(casesNode.Attributes["count"].Value);
 
-        XmlNodeList xmlResults = resultDocument.SelectNodes("/response/cases/case");
+        var xmlResults = resultDocument.SelectNodes("/response/cases/case");
 
-        foreach(XmlNode node in xmlResults)
+        foreach (XmlNode node in xmlResults)
         {
-        	results.Results.Add(new SearchResult { CaseId = Int32.Parse(node["ixBug"].InnerText), Title = node["sTitle"].InnerText });
+            results.Results.Add(new SearchResult
+            {
+                CaseId = Int32.Parse(node["ixBug"].InnerText),
+                Title = node["sTitle"].InnerText
+            });
         }
 
         return results;
     }
 
-    public int CreateNewCase(string caption, string filename, byte[] imageData)
+    public int CreateNewCase(string title,
+        string description,
+        string filename,
+        byte[] imageData,
+        Int32 projectID = -1,
+        Int32 areaID = -1,
+        Int32 milestoneID = -1,
+        Int32 categoryID = -1,
+        Int32 assignedToPersonID = -1,
+        Int32 statusID = -1,
+        DateTime? dueDate = null)
     {
-        FBApiNet35 fb = new FBApiNet35(m_server, m_token);
+        var fb = new FBApiNet35(m_server, m_token);
 
-        Dictionary<string, string> cmds = new Dictionary<string, string>();
-        cmds.Add("sTitle", caption);
-        cmds.Add("sEvent", caption);
-        cmds.Add("cols", "ixBug");
-        XmlDocument output = fb.XCmd("new", cmds, EncodeSingleFileForFogBugz(filename, imageData));
+        var cmds = new Dictionary<string, string>
+        {
+            {"sTitle", title},
+            {"sEvent", description},
+            {"cols", "ixBug"}
+        };
 
-        string caseNumber = output.InnerText;
+        if (projectID > 0) cmds.Add("ixProject", projectID.ToString(CultureInfo.InvariantCulture));
+        if (areaID > 0) cmds.Add("ixArea", areaID.ToString(CultureInfo.InvariantCulture));
+        if (milestoneID > 0) cmds.Add("ixFixFor", milestoneID.ToString(CultureInfo.InvariantCulture));
+        if (categoryID > 0) cmds.Add("ixCategory", categoryID.ToString(CultureInfo.InvariantCulture));
+        if (assignedToPersonID > 0) cmds.Add("ixPersonAssignedTo", assignedToPersonID.ToString(CultureInfo.InvariantCulture));
+        if (statusID > 0) cmds.Add("ixStatus", statusID.ToString(CultureInfo.InvariantCulture));
+        if (dueDate != null) cmds.Add("dtDue", dueDate.Value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"));
+
+        var output = fb.XCmd("new", cmds, EncodeSingleFileForFogBugz(filename, imageData));
+
+        var caseNumber = output.InnerText;
 
         return Int32.Parse(caseNumber);
     }
 
     public void AttachImageToExistingCase(int caseId, string caption, string filename, byte[] imageData)
     {
-        FBApiNet35 fb = new FBApiNet35(m_server, m_token);
+        var fb = new FBApiNet35(m_server, m_token);
 
-        Dictionary<string, string> cmds = new Dictionary<string,string>();
+        var cmds = new Dictionary<string, string>();
         cmds.Add("ixBug", caseId.ToString());
         cmds.Add("sEvent", caption);
         cmds.Add("cols", "ixBug");
@@ -121,27 +157,228 @@ public class FogBugz
 
     private FogBugzFile[] EncodeSingleFileForFogBugz(string filename, byte[] imageData)
     {
-        return new FogBugzFile[] 
-        { 
-            new FogBugzFile() { Filename = filename, ContentType = "image/jpeg", Data = imageData } 
+        return new[]
+        {
+            new FogBugzFile
+            {
+                Filename = filename,
+                ContentType = "image/jpeg",
+                Data = imageData
+            }
         };
     }
 
-    public string Token { get { return m_token; } }
+    public List<Project> ListProjects(Boolean onlyWritable = true)
+    {
+        var fb = new FBApiNet35(m_server, m_token);
 
-    private Uri m_server;
-    private string m_token;
-    private FBApiNet35 m_fb;
+        var projectNodes = fb.XListProjects(onlyWritable);
+
+        return (from XmlNode projectNode in projectNodes
+            select new Project
+            {
+                ProjectID = Convert.ToInt32(projectNode["ixProject"].InnerText),
+                ProjectName = projectNode["sProject"].InnerText,
+                OwnerID = Convert.ToInt32(projectNode["ixPersonOwner"].InnerText),
+                OwnerName = projectNode["sPersonOwner"].InnerText,
+                OwnerEmail = projectNode["sEmail"].InnerText,
+                OwnerPhone = projectNode["sPhone"].InnerText,
+                Inbox = Convert.ToBoolean(projectNode["fInbox"].InnerText),
+                WorkflowID = Convert.ToInt32(projectNode["ixWorkflow"].InnerText),
+                Deleted = Convert.ToBoolean(projectNode["fDeleted"].InnerText)
+            }).ToList();
+    }
+
+    public List<Area> ListAreas(Boolean onlyWritable = true, int projectID = -1, int areaID = -1)
+    {
+        var fb = new FBApiNet35(m_server, m_token);
+
+        var areaNodes = fb.XListAreas(onlyWritable, projectID, areaID);
+
+        return (from XmlNode areaNode in areaNodes
+            select new Area
+            {
+                AreaID = Convert.ToInt32(areaNode["ixArea"].InnerText),
+                AreaName = areaNode["sArea"].InnerText,
+                ProjectID = Convert.ToInt32(areaNode["ixProject"].InnerText),
+                ProjectName = areaNode["sProject"].InnerText,
+                OwnerID = String.IsNullOrEmpty(areaNode["ixPersonOwner"].InnerText) ? -1 : Convert.ToInt32(areaNode["ixPersonOwner"].InnerText),
+                OwnerName = areaNode["sPersonOwner"].InnerText,
+                Type = (AreaType) Convert.ToInt32(areaNode["nType"].InnerText),
+                DocumentsTrained = Convert.ToInt32(areaNode["cDoc"].InnerText),
+                Deleted = false
+            }).ToList();
+    }
+
+    public List<Category> ListCategories()
+    {
+        var fb = new FBApiNet35(m_server, m_token);
+
+        var categoriesNodes = fb.XListCategories();
+
+        return (from XmlNode categoryNode in categoriesNodes
+            select new Category
+            {
+                CategoryID = Convert.ToInt32(categoryNode["ixCategory"].InnerText),
+                CategoryName = categoryNode["sCategory"].InnerText,
+                CategoryNamePlural = categoryNode["sPlural"].InnerText,
+                DefaultResolvedStatusID = Convert.ToInt32(categoryNode["ixStatusDefault"].InnerText),
+                DefaultActiveStatusID = Convert.ToInt32(categoryNode["ixStatusDefaultActive"].InnerText),
+                IsScheduleItem = Convert.ToBoolean(categoryNode["fIsScheduleItem"].InnerText)
+            }).ToList();
+    }
+
+    public List<Status> ListStatuses(Int32 categoryID = -1, Boolean onlyResovled = false)
+    {
+        var fb = new FBApiNet35(m_server, m_token);
+
+        var statusNodes = fb.XListStatuses(categoryID, onlyResovled);
+
+        return (from XmlNode statusNode in statusNodes
+            select new Status
+            {
+                StatusID = Convert.ToInt32(statusNode["ixStatus"].InnerText),
+                StatusName = statusNode["sStatus"].InnerText,
+                CategoryID = Convert.ToInt32(statusNode["ixCategory"].InnerText),
+                WorkDone = Convert.ToBoolean(statusNode["fWorkDone"].InnerText),
+                Resolved = Convert.ToBoolean(statusNode["fResolved"].InnerText),
+                Duplicate = Convert.ToBoolean(statusNode["fDuplicate"].InnerText),
+                Deleted = Convert.ToBoolean(statusNode["fDeleted"].InnerText),
+                Order = Convert.ToInt32(statusNode["iOrder"].InnerText)
+            }).ToList();
+    }
+
+    public List<Person> ListPeople(Boolean includeActive = true,
+        Boolean includeNormal = true,
+        Boolean includeDeleted = false,
+        Boolean includeCommunity = false,
+        Boolean includeVirtual = false)
+    {
+        var fb = new FBApiNet35(m_server, m_token);
+
+        var peopleNodes = fb.XListPeople(includeActive, includeNormal, includeDeleted, includeCommunity, includeVirtual);
+
+        return (from XmlNode personNode in peopleNodes
+            select new Person
+            {
+                PersonID = Convert.ToInt32(personNode["ixPerson"].InnerText),
+                FullName = personNode["sFullName"].InnerText,
+                Email = personNode["sEmail"].InnerText,
+                Phone = personNode["sPhone"].InnerText,
+                Administrator = Convert.ToBoolean(personNode["fAdministrator"].InnerText),
+                Community = Convert.ToBoolean(personNode["fCommunity"].InnerText),
+                Virtual = Convert.ToBoolean(personNode["fVirtual"].InnerText),
+                Deleted = Convert.ToBoolean(personNode["fDeleted"].InnerText),
+                Notify = Convert.ToBoolean(personNode["fNotify"].InnerText),
+                Homepage = personNode["sHomepage"].InnerText
+            }).ToList();
+    }
+
+    public List<Milestone> ListMilestones(Int32 projectID = -1)
+    {
+        var fb = new FBApiNet35(m_server, m_token);
+
+        var fixForNodes = fb.XListFixFors(projectID);
+
+        return (from XmlNode fixForNode in fixForNodes
+            select new Milestone
+            {
+                MilestoneID = Convert.ToInt32(fixForNode["ixFixFor"].InnerText),
+                MilestoneName = fixForNode["sFixFor"].InnerText,
+                Inactive = Convert.ToBoolean(fixForNode["fDeleted"].InnerText),
+                ProjectID = String.IsNullOrEmpty(fixForNode["ixProject"].InnerText) ? -1 : Convert.ToInt32(fixForNode["ixProject"].InnerText)
+            }).ToList();
+    }
 }
 
 public class SearchResult
 {
-    public int CaseId;
-    public string Title;
+    public int CaseId { get; set; }
+    public string Title { get; set; }
 }
 
 public class SearchResults
 {
-    public List<SearchResult> Results;
-    public int TotalResults;
+    public List<SearchResult> Results { get; set; }
+    public int TotalResults { get; set; }
+}
+
+public class Project
+{
+    public Boolean Deleted { get; set; }
+    public int ProjectID { get; set; }
+    public Boolean Inbox { get; set; }
+    public String ProjectName { get; set; }
+    public String OwnerEmail { get; set; }
+    public int OwnerID { get; set; }
+    public String OwnerName { get; set; }
+    public String OwnerPhone { get; set; }
+    public int WorkflowID { get; set; }
+}
+
+public enum AreaType
+{
+    Normal = 0,
+    NotSpam = 1,
+    Undecided = 2,
+    Spam = 3
+}
+
+public class Area
+{
+    public int AreaID { get; set; }
+    public String AreaName { get; set; }
+    public int OwnerID { get; set; }
+    public String OwnerName { get; set; }
+    public int ProjectID { get; set; }
+    public string ProjectName { get; set; }
+    public AreaType Type { get; set; }
+    public Boolean Deleted { get; set; }
+    public int DocumentsTrained { get; set; }
+}
+
+public class Category
+{
+    public int CategoryID { get; set; }
+    public String CategoryName { get; set; }
+    public String CategoryNamePlural { get; set; }
+    public Int32 DefaultResolvedStatusID { get; set; }
+    public Boolean IsScheduleItem { get; set; }
+    public Boolean IsDeleted { get; set; }
+    public Int32 Order { get; set; }
+    public Int32 DefaultActiveStatusID { get; set; }
+}
+
+public class Status
+{
+    public Int32 StatusID { get; set; }
+    public String StatusName { get; set; }
+    public Int32 CategoryID { get; set; }
+    public Boolean WorkDone { get; set; }
+    public Boolean Resolved { get; set; }
+    public Boolean Duplicate { get; set; }
+    public Boolean Deleted { get; set; }
+    public Int32 Order { get; set; }
+}
+
+public class Person
+{
+    public Int32 PersonID { get; set; }
+    public String FullName { get; set; }
+    public String Email { get; set; }
+    public String Phone { get; set; }
+    public Boolean Administrator { get; set; }
+    public Boolean Community { get; set; }
+    public Boolean Virtual { get; set; }
+    public Boolean Deleted { get; set; }
+    public Boolean Notify { get; set; }
+    public String Homepage { get; set; }
+}
+
+public class Milestone
+{
+    public Int32 MilestoneID { get; set; }
+    public String MilestoneName { get; set; }
+    public Boolean Inactive { get; set; }
+    public Int32 ProjectID { get; set; }
 }

@@ -1,11 +1,9 @@
-﻿using System;
-
-namespace FogBugzTestHarness
+﻿namespace FogBugzTestHarness
 {
     public class FogBugzFile
     {
-        public string Filename;
         public string ContentType;
         public byte[] Data;
+        public string Filename;
     }
 }
